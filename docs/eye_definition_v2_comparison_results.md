@@ -203,4 +203,4 @@ A_r050 不是逐眼全面優勢：dog 17207 左眼預測 556 px，對 v2 IoU 0.2
 本輪沒有執行新的標註重複研究、模型訓練、動物偵測、候選重排、可見性判定或物理尺度校正。
 本報告產生時Streamlit尚未整合v2。後續同日已依負責人核准加入v1／v2切換與並列，
 預設保留v1與A基線；固定模型輸出顯示兩版評分，歷史診斷／晉級判定仍明示v1。
-操作與工程驗證見[Results Explorer](../README.md#read-only-results-explorer)；上述實驗數值不變。
+操作與工程驗證見[Results Explorer](research_history.md#read-only-results-explorer)；上述實驗數值不變。
