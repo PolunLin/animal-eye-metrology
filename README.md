@@ -97,6 +97,9 @@ PY
 ## Docker
 
 目標為 **Linux amd64、CPU**；UI 與 API 共用同一映像、各自執行程序。
+需要已啟動的 Docker Engine／Desktop、Compose v2 與 Python 3.11（只用於下載／核對權重）。
+建置需連網並編譯 MMCV，首次耗時較長。Apple Silicon 會模擬 amd64，建置與推論速度可能較慢。
+請先依上方 COCO Example 取得示範圖，或準備自己的多動物 JPEG／PNG。
 
 ```sh
 cp .env.example .env
@@ -113,12 +116,16 @@ UI：[localhost:8517](http://127.0.0.1:8517)；API：[localhost:8000/docs](http:
 docker compose run --rm api python scripts/check_runtime.py \
   --config configs/inference.docker.toml --load-models
 docker compose run --rm api python -m pytest -q
+docker compose exec -T api python scripts/smoke_api.py \
+  --image data/000000125405.jpg --report outputs/api_smoke.json
 docker compose logs --tail=100
 docker compose down
 ```
 
 建置會安裝固定套件與模型程式碼；推論不下載資料。Linux arm64／GPU 不在目前驗證範圍。
 CI 提供輕量測試與選擇性 CPU 容器檢查；這些工程檢查不代替模型準確度驗證。
+容器 smoke 檢查包含真實圖片、兩種距離、CSV／PNG 下載、無效圖片及無動物圖片。
+報告保存在主機 `outputs/api_smoke.json`；Docker 模式不需要先建立本機 `.runtime/`。
 
 ## Validation
 

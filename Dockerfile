@@ -32,7 +32,7 @@ COPY docs/ docs/
 COPY examples/ examples/
 COPY tests/ tests/
 COPY requirements/ requirements/
-COPY .env.example Dockerfile compose.yaml .dockerignore ./
+COPY .env.example Dockerfile compose.yaml .dockerignore .gitignore .gitattributes ./
 COPY .github/ .github/
 RUN mkdir -p weights data outputs
 EXPOSE 8517 8000
