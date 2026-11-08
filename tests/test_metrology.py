@@ -172,7 +172,8 @@ def test_pairs_use_same_image_same_animal_binocular_and_distinct_right_eyes() ->
 
 
 @pytest.fixture
-def synthetic_baseline(local_config: Path) -> tuple[dict, object]:
+def synthetic_baseline(local_config: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict, object]:
+    from animal_eye_metrology import measurement_baseline
     from animal_eye_metrology.cli import main
     from animal_eye_metrology.coco import load_coco
     from animal_eye_metrology.eye_annotations import initialize_store, save_annotation
@@ -181,6 +182,13 @@ def synthetic_baseline(local_config: Path) -> tuple[dict, object]:
 
     assert main(["analyze", "--config", str(local_config)]) == 0
     root = local_config.parent
+    synthetic_docs = root / "synthetic_docs"
+    synthetic_docs.mkdir()
+    for name in ("phase3a_eye_annotation_protocol.md", "phase3b_annotation_tool.md"):
+        (synthetic_docs / name).write_text(
+            "SYNTHETIC TEST DOCUMENT ONLY; NOT AN APPROVED RESEARCH PROTOCOL OR GROUND TRUTH.\n"
+        )
+    monkeypatch.setattr(measurement_baseline, "DOCS_ROOT", synthetic_docs)
     data = load_coco(root / "annotations.json")
     (root / "images").mkdir()
     for image_id in (10, 20, 50):
@@ -243,6 +251,17 @@ def synthetic_baseline(local_config: Path) -> tuple[dict, object]:
         'directory="phase3/frozen_baseline"\n'
     )
     return read_settings(cfg)
+
+
+def test_baseline_requires_the_original_protocol_document(synthetic_baseline) -> None:
+    from animal_eye_metrology import measurement_baseline
+
+    cfg, data = synthetic_baseline
+    protocol = measurement_baseline.PROTOCOL_DOCUMENTS[cfg["snapshot"]["protocol_version"]]
+    (measurement_baseline.DOCS_ROOT / protocol).unlink()
+    with pytest.raises(Phase1Error, match="Approved protocol document is missing"):
+        measurement_baseline.run(cfg, data)
+    assert not cfg["output"]["directory"].exists()
 
 
 def test_freeze_replays_after_live_gt_changes_and_rejects_tampering(synthetic_baseline) -> None:

@@ -426,9 +426,9 @@ def save_annotation(
                     "Pillow": version("Pillow"),
                     "backend_sha256": sha256_file(Path(__file__)),
                     "canvas_sha256": sha256_file(
-                        Path(__file__).resolve().parents[2] / "app/eye_canvas.js"
+                        Path(__file__).resolve().parents[2] / "app/assets/eye_canvas.js"
                     )
-                    if (Path(__file__).resolve().parents[2] / "app/eye_canvas.js").exists()
+                    if (Path(__file__).resolve().parents[2] / "app/assets/eye_canvas.js").exists()
                     else None,
                 },
             }

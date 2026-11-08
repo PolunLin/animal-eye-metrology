@@ -7,32 +7,45 @@
 
 | 工作 | 方法 | 選擇依據與限制 |
 | --- | --- | --- |
-| 動物分割 | YOLO26s-seg／Ultralytics 8.4.0 | 已保存四模型 CPU 試跑與 15 張 Selected Images 比較，候選恢復結果支持沿用；不代表全 COCO 最佳 |
+| 動物分割 | YOLO26s-seg／Ultralytics 8.4.0 | 同時輸出動物框與實例遮罩，框可供姿態模型裁切；保留既定模型，不宣稱全 COCO 最佳 |
 | 眼點定位 | HRNet-W32／AP-10K、固定 MMPose commit | 有動物解剖左右眼通道並通過本機 CPU 相容性；眼點不是本案遮罩重心或可見性判斷 |
-| 眼部分割 | SAM 2.1 Hiera-Tiny、固定官方 commit | 三模型／12 眼固定人工提示比較中，平均 IoU、Dice 與兩種距離 MAE 領先；不當成全自動泛化結論 |
+| 眼部分割 | SAM 2.1 Hiera-Tiny、固定官方 commit | 接受定位點作提示，將眼部定位與遮罩生成分開；局部 ROI 限定輸入範圍，仍可能分到眼睛周圍外觀 |
 | 提示／ROI | HRNet 單正點、無眼框；A_r100，選配 A_r050 | 保留既有基線與對照；不用 GT 調提示、排序候選或修補輪廓 |
 
-完整紀錄：[動物比較](phase2_yolo26s_selected_results.md)、
-[三模型固定提示比較](eye_segmentation_comparison_results.md)、[自動定位](phase3c_auto_eye_localization_poc_results.md)。
-沿用預訓練權重，沒有訓練或微調；模型候選品質分數不是經校準的正確率。
+預設推論沿用固定預訓練權重，不在推論時訓練或微調。SAM2 固定來源為
+`2b90b9f5ceec907a1c18123530e92e794ad901a4`，MMPose 為
+`5408bc76f5b848cf925a0d1857899011d8c5b497`；權重 SHA-256 由推論設定與準備工具核對。
+模型候選品質分數不是經校準的正確率；此文件不將本機開發紀錄當作公開效能基準。
+
+對 HRNet 兩眼點距離 $d_{\mathrm{HRNet}}$，以各預測眼點為中心的方形 ROI 邊長為：
+
+$$
+L=f\max(32,2d_{\mathrm{HRNet}})
+$$
+
+A_r100 使用 $f=1$，A_r050 使用 $f=0.5$；左／上邊界取 floor，右／下取 ceil，
+再裁至圖片邊界。每眼只用其預測正點，不使用人工提示或 GT 回填。
+兩條件是同一圖片的對照，不是獨立樣本。
 
 ## Data and Ground Truth
 
-來源為 COCO 2017 validation。選樣、排除 crowd、人工示範圖與資料完整性紀錄見
-[Dataset Selection](dataset_selection.md)。COCO 動物實例遮罩可以評估動物分割，不能當眼睛 GT。
+COCO 範例來源為 2017 validation；示範應選含至少兩隻動物的圖片，
+並保存資料版本、image_id、來源與檔案雜湊。提交的單張圖片來源清單在
+[`examples/input_manifest.csv`](../examples/input_manifest.csv)，距離樣例在
+[`examples/measurements.csv`](../examples/measurements.csv)。完整資料集與人工參考需另外準備。
+COCO 動物實例遮罩可以評估動物分割，不能當眼睛 GT；開發圖也不能當獨立測試集。
 
-主要眼部開發比較為 20247（熊）、125405（狗）、333069（長頸鹿），共 6 動物、12 眼、
-6 筆雙眼與 3 筆跨右眼距離。三圖經目的性選取並參與開發，不是獨立測試集。
-十類工程試跑的非空輸出也不是新增的眼部準確度證據。
+### Ground Truth Definitions
 
 | 定義 | 範圍 | 使用規則 |
 | --- | --- | --- |
 | v1：`eye-visible-aperture-v1` | 可見眼裂 | 保留原始成績與凍結參考 |
 | v2：`eye-visible-eyelid-v2` | 可見眼裂＋緊鄰可辨識眼瞼邊緣，排除毛髮／色塊 | 同一模型輸出另外評分，不能把換定義稱為模型進步 |
 
-規範與修訂見 [v2 Protocol](eye_annotation_protocol_v2.md)、[Qualification Review](eye_annotation_v2_review.md)、
-[Definition Comparison](eye_definition_v2_comparison_results.md)。解剖左右及可見範圍由人判讀；
-程式完整性檢查不代替人的語義審核。定位 Landmark GT 與分割 Mask GT 是不同標的。
+解剖左右及可見範圍由人判讀；程式完整性檢查不代替人的語義審核。
+定位 Landmark GT 與分割 Mask GT 是不同標的。兩種既有分割定義應分開保存版本，
+不混用來比較成績。研究標註還需本機原始規範、資格審核與凍結參考；這裡只說明量測語意，
+不以簡介代替完整標註流程。
 
 ## Measurement and Formula Verification
 
@@ -62,15 +75,9 @@ $$
 .runtime/app/bin/python -m pytest -q tests/test_metrology.py
 ```
 
-既有人工參考可用對應歷史環境及已備妥的凍結產物唯讀重算：
-
-```sh
-.venv/bin/python -m animal_eye_metrology.measurement_baseline \
-  --verify outputs/phase3/manual_measurement_baseline_v2
-```
-
-該驗證核對遮罩／版本並重算重心與距離，不重新推論或建立 GT。
 提交的 [CSV 範例](../examples/README.md) 另提供不需模型的端點公式核對。
+有人工參考時，應核對遮罩與版本，從原圖格點重新計算參考重心與距離，
+再與預測比較；不能只檢查程式成功執行或 CSV 中的算式。
 
 ## Evaluation Metrics
 
@@ -86,6 +93,10 @@ e_{\mathrm{centroid}}=\|c(P)-c(G)\|_2,\qquad
 \mathrm{MAE}=\frac{1}{n}\sum_{i=1}^{n}|d_i^{\mathrm{pred}}-d_i^{\mathrm{ref}}|
 $$
 
+$$
+\mathrm{RMSE}=\sqrt{\frac{1}{n}\sum_{i=1}^{n}(d_i^{\mathrm{pred}}-d_i^{\mathrm{ref}})^2}
+$$
+
 | 層次 | 使用與缺失規則 |
 | --- | --- |
 | 動物分割 | 官方 COCOeval Mask AP／AR，另記固定操作點配對；不是眼睛準確度 |
@@ -96,11 +107,12 @@ $$
 
 新圖沒有 GT 時不產生以上誤差。定位、分割、重心及距離是不同指標，不能互相代替。
 
-## Evidence and Uncertainty
+## Validation and Uncertainty
 
-已保存的 A_r100 對 v1 平均 IoU 為 0.478，同一預測改對 v2 評分後為 0.522；
-重心誤差則由 1.576 變為 1.738 px。這是參考定義敏感度，不是模型進步，
-也顯示重疊與幾何品質須分開報告。完整來源與分母見 [v1／v2 比較](eye_definition_v2_comparison_results.md)。
+評估前需固定資料分割、人工參考定義、配對規則、失敗分母與量測容忍值。
+將開發資料與獨立測試資料分開，逐眼檢查輪廓與重心，分開報告分割指標與兩類距離誤差。
+更換參考定義造成的分數差異屬定義敏感度，不能當作模型進步。
+環境、模型載入及 API 成功只證明工程流程可執行，不提供上述準確度證據。
 
 | 限制 | 界線 |
 | --- | --- |
@@ -110,5 +122,6 @@ $$
 | 不確定度 | MAE、有限重標差異與 v1／v2 差異不是已校準信賴區間 |
 | 泛化 | 尚無獨立留出驗收；新增資料與研究方法仍需負責人核准 |
 
-每輪記錄資料版本／選樣、模型版本／commit、設定、seed、分母與命令。
-本次環境／文件整理不重新選模型、改 GT、更新量測定義或回寫歷史成績。
+每次研究記錄資料版本／選樣、模型版本／commit、設定、seed、分母與命令；
+實驗報告與完整產物保存在本機，不納入公開專案文件。新圖沒有人工參考時，
+所有量測資格保持 `unverified`，不提供偽造的準確率或不確定度。

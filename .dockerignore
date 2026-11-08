@@ -20,3 +20,27 @@ __pycache__
 *.npy
 *.log
 .DS_Store
+
+# Match the public documentation boundary used by Git.
+docs/*
+!docs/index.md
+!docs/setup.md
+!docs/docker.md
+!docs/api.md
+!docs/architecture.md
+!docs/methodology.md
+!docs/notebook_demo.md
+AGENTS.md
+**/AGENTS.md
+AGENT.md
+**/AGENT.md
+Agent*.md
+agent*.md
+Phase*.md
+phase*.md
+.agents
+.codex
+.playwright-cli
+runs
+.ipynb_checkpoints
+**/.ipynb_checkpoints

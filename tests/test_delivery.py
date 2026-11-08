@@ -24,7 +24,6 @@ def shareable_copy(tmp_path: Path) -> Path:
         ".github",
         "app",
         "configs",
-        "docs",
         "examples",
         "notebooks",
         "requirements",
@@ -76,8 +75,22 @@ def test_missing_environment_example_and_broken_links_fail_independently(
     result = delivery.check_delivery(shareable_copy)
     assert result["status"] == "failed"
     assert status(result, "required_files") is False
-    assert status(result, "readme_local_links") is False
+    assert status(result, "documentation_local_links") is False
     assert status(result, "recorded_csv") is True
+
+
+def test_published_guides_cannot_depend_on_a_local_research_archive(shareable_copy: Path) -> None:
+    archive = shareable_copy / "docs/research_history.md"
+    archive.write_text("Local history is intentionally outside the public delivery.\n")
+    with (shareable_copy / "docs/setup.md").open("a") as handle:
+        handle.write("\n[Local history](research_history.md)\n")
+    result = delivery.check_delivery(shareable_copy)
+    assert status(result, "documentation_local_links") is False
+    assert "local research archive" in next(
+        check["detail"]
+        for check in result["checks"]
+        if check["name"] == "documentation_local_links"
+    )
 
 
 @pytest.mark.parametrize("change", ["bytes", "geometry", "qualification", "empty"])

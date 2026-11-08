@@ -16,17 +16,17 @@ AI-Based Segmentation and Distance Measurement.
 | 研究工作區 | COCO 篩選、人工眼部標註、固定提示與 v1／v2 成果比較；需另備研究資料與凍結產物 |
 
 **新圖輸出都是候選量測，資格仍為 `unverified`。** 遮罩重心不是瞳孔中心，像素距離不是實體長度。
-左右眼、可見性與可靠量測資格尚未完成獨立驗證。主要眼部比較只有 3 張開發圖、6 隻動物、12 眼，
-不代表全物種準確率或獨立泛化驗收。新圖沒有人工參考時不產生 IoU、Dice 或距離誤差。
+左右眼、可見性與可靠量測資格尚未完成獨立驗證，不能外推全物種準確率。
+新圖沒有人工參考時不產生 IoU、Dice 或距離誤差。
 
 ## Technology Stack
 
 | 部分 | 技術與理由 |
 | --- | --- |
 | 應用 | Python 3.11、Streamlit、FastAPI／Uvicorn、本機檔案；無資料庫與登入系統 |
-| 動物分割 | YOLO26s-seg／Ultralytics 8.4.0；沿用已保存的多模型試跑與 Selected Images 比較 |
+| 動物分割 | YOLO26s-seg／Ultralytics 8.4.0；同時提供每隻動物的框與實例遮罩 |
 | 眼部定位 | HRNet-W32／AP-10K、固定 MMPose commit；使用動物眼點通道，隔離相依環境 |
-| 眼部分割 | SAM 2.1 Tiny、固定官方 commit；沿用小樣本固定提示比較的基線，無新訓練 |
+| 眼部分割 | SAM 2.1 Tiny、固定官方 commit；以眼點與局部 ROI 產生眼部遮罩 |
 | 環境 | 應用 Torch 2.9.1；HRNet Torch 2.2.2／MMCV 2.1.0，維持兩套環境 |
 | 品質與紀錄 | CPU FP32、seed 42、4 threads、Pytest、Ruff、來源／權重 SHA-256 |
 
@@ -64,8 +64,8 @@ docker compose up
 ```
 
 介面預設 [localhost:8517](http://127.0.0.1:8517)，API 預設 [localhost:8000](http://127.0.0.1:8000)。
-Linux amd64 的建置、400 項容器測試、三模型載入與 HTTP 推論已通過；
-建置、掛載與完整證據見 [Docker](docs/docker.md) 與 [驗證紀錄](docs/delivery_validation.md)。
+Linux amd64 的建置、容器測試、三模型載入與 HTTP 推論已有成功驗證；
+建置、掛載及 CI 證據見 [Docker](docs/docker.md)。
 
 ## API and Access
 
@@ -97,9 +97,7 @@ Notebook 環境獨立於模型環境；完整推論仍需本機權重與配套�
 | 互動 Demo | [Notebook](notebooks/demo.ipynb)、[使用說明](docs/notebook_demo.md) |
 | 測試 CSV | [measurements.csv](examples/measurements.csv)、[來源與欄位](examples/README.md) |
 | 公式與驗證 | [Methodology](docs/methodology.md#measurement-and-formula-verification) |
-| 研究文件索引 | [Documentation Index](docs/index.md) |
-| 歷史 README 快照 | [Research History](docs/research_history.md)，保留整理前的原始內容與當時狀態 |
-| 本次交付驗證 | [Delivery Validation](docs/delivery_validation.md)，分開記錄基線、回歸、新環境與 Docker |
+| 操作文件索引 | [Documentation Index](docs/index.md) |
 
 ```sh
 .runtime/app/bin/python -m pytest -q
@@ -108,7 +106,7 @@ Notebook 環境獨立於模型環境；完整推論仍需本機權重與配套�
 ```
 
 單元測試以合成幾何與隔離資料驗證公式、座標、失敗狀態與保存，不把合成資料當研究 GT。
-真實模型、乾淨環境與 Docker 驗證分開記錄；不以歷史測試數量代表本次交付已驗證。
+真實模型與 Docker 的驗證方式見 [Setup](docs/setup.md#validation) 與 [Docker](docs/docker.md#validation-status)。
 
 ## Repository Layout
 
@@ -121,11 +119,16 @@ notebooks/                   Step-by-step Python demo; recorded or live inferenc
 scripts/                     Fresh environment, model and readiness tools
 tests/                       Automated tests using isolated fixtures
 examples/                    Recorded CSV and provenance notes
-docs/                        Setup, Docker, architecture, methods and research reports
+docs/                        Seven project guides: index, setup, Docker, API, architecture, methods, notebook
 Dockerfile, compose.yaml     CPU container and services
 .env.example                 Non-secret configuration template
 data/, weights/, outputs/    Local assets and generated artifacts; ignored by Git
 ```
+
+Git 只保留程式、執行設定、依賴定義、自動測試、空輸出的 Demo Notebook、小型 CSV 範例，
+以及說明此專案的上述七份文件。Phase 研究紀錄、提案、Agent 筆記、執行報告與歷史文件快照
+在本機保留並由 `.gitignore` 排除；資料集、權重、虛擬環境、快取及推論產物也不提交。
+研究模式的完整原圖、人工參考與凍結產物需另外備妥，不是乾淨 checkout 的附帶資料。
 
 ## License
 
@@ -137,4 +140,4 @@ data/, weights/, outputs/    Local assets and generated artifacts; ignored by Gi
 | HRNet／MMPose | [固定 commit 的 Apache-2.0 LICENSE](https://github.com/open-mmlab/mmpose/blob/5408bc76f5b848cf925a0d1857899011d8c5b497/LICENSE)、[AP-10K 模型來源](https://github.com/open-mmlab/mmpose/tree/5408bc76f5b848cf925a0d1857899011d8c5b497/configs/animal_2d_keypoint/topdown_heatmap/ap10k) |
 | SAM 2.1 | [固定 commit 的 Apache-2.0 LICENSE](https://github.com/facebookresearch/sam2/blob/2b90b9f5ceec907a1c18123530e92e794ad901a4/LICENSE)、[模型與 checkpoint 來源](https://github.com/facebookresearch/sam2/blob/2b90b9f5ceec907a1c18123530e92e794ad901a4/README.md) |
 
-資料、權重與大量研究二進位檔不提交 Git；完整研究產物需按文件另外準備。
+資料與模型的取得方式見 [Setup](docs/setup.md)；使用者仍須遵守各上游授權。

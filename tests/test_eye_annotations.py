@@ -21,6 +21,7 @@ from animal_eye_metrology.eye_annotations import (  # noqa: E402
     rasterize,
     save_annotation,
 )
+from animal_eye_metrology.verification import sha256_file  # noqa: E402
 
 
 def target() -> dict[str, str]:
@@ -75,6 +76,10 @@ def test_revisions_separate_eyes_reopen_and_conflicting_writer(tmp_path: Path) -
     assert load_annotations(tmp_path, targets) == []
     left = save_annotation(
         tmp_path, targets, (10, 1001, "left"), geometry(), review(), expected_version=0
+    )
+    metadata = json.loads((tmp_path / "revisions/10_1001_left_v1.json").read_text())
+    assert metadata["tool"]["canvas_sha256"] == sha256_file(
+        Path(__file__).resolve().parents[1] / "app/assets/eye_canvas.js"
     )
     first_mask = (tmp_path / left["mask_path"]).read_bytes()
     right = save_annotation(

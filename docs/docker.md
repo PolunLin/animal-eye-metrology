@@ -9,11 +9,14 @@
 
 | 範圍 | 狀態 |
 | --- | --- |
-| 原 macOS arm64 CPU 推論 | 已有歷史實跑，見 [New Image Inference](new_image_inference.md) |
-| 這次乾淨本機環境 | 新 app／pose 環境、三模型載入、API 與桌面／手機介面均通過；見 [Delivery Validation](delivery_validation.md) |
 | Docker 建置／Linux 真實推論 | Linux amd64 建置、400 項容器測試、三模型載入與真實 HTTP smoke 全部通過；[CI](https://github.com/PolunLin/animal-eye-metrology/actions/runs/42472036879) |
-| 跨平台比較 | 同一開發圖的 8 個遮罩逐像素相同、6 筆距離相同；眼點最大差 0.00006103515625 px，不外推其他圖片 |
+| 合併後程式檢查 | [main CI](https://github.com/PolunLin/animal-eye-metrology/actions/runs/42474324880) 的單元測試、Ruff 與交付檢查通過 |
 | Linux arm64、GPU | 未執行 |
+
+這些連結指向特定提交的工程驗證，不是獨立準確度驗收，也不表示後續提交都重新執行重型測試。
+完整 CPU 流程的基線提交為 `91fbeeb0ae029af6e664d6dfa76d891070e7ad16`；
+CI 推論容器使用 `--network none`，檢查既有開發圖、無動物合成圖、錯誤上傳、
+兩類候選距離、保存與 CSV／PNG 下載。
 
 ## Build and Run
 
@@ -48,7 +51,8 @@ Compose 明確使用 `/app/configs/inference.docker.toml`，避免容器載入�
 | `data/` | 研究模式選用、唯讀 | COCO／人工研究原圖；新圖推論不依賴完整 COCO |
 
 主機虛擬環境、權重、COCO 與歷史 outputs 不作為原始碼打包。
-停止或重建容器後，主機輸出目錄仍保留新 run。研究模式仍需對應的完整凍結產物與設定。
+停止或重建容器後，主機輸出目錄仍保留新 run。研究模式仍需本機規範、完整凍結產物與設定；
+Phase 文件與歷史執行報告不包含在 Git 或映像中。
 UI 與 API 共用輸出根目錄時，由 `.inference.lock` 跨程序互斥；忙碌時 API 回傳 409，
 UI／CLI 保留忙碌錯誤。這是本機檔案系統協作鎖，沒有排隊、取消或跨主機調度。
 
@@ -75,12 +79,15 @@ docker compose down
 MMCV 編譯成功仍需模型載入與 forward 驗證。本機測試與 Linux 容器測試是分開的證據；
 若無法建置或執行，應列出待驗證項目，不能將靜態檢查寫成 Docker 通過。
 
-## Verified Image
+## Re-run the Container Checks
 
-驗證 commit：`91fbeeb0ae029af6e664d6dfa76d891070e7ad16`。
-映像 ID：`sha256:f768ff3d88c5e2aac2b479f341c15b5811d7484a056600719e8d8afa9f794190`。
+```sh
+docker compose run --rm api python scripts/check_runtime.py \
+  --config configs/inference.docker.toml --load-models
+docker compose run --rm api python -m pytest -q
+```
 
-CI 先核對同一既有示範圖與三份權重，再建置映像；推論容器使用 `--network none`。
-驗收包含無效上傳、無動物合成圖、兩類候選距離、保存與 CSV／PNG 下載。
-來源、實際環境清單、建置／測試／推論日誌及輸出保存在該 CI 的 `cpu-runtime-evidence` artifact，
-保留 14 天；永久可查的結論與輸入／產物識別碼見 Delivery Validation。
+啟動 API 後，可依 [API Guide](api.md#engineering-smoke-check) 使用已備妥的本機圖片檢查完整 HTTP 流程。
+CI 只有在手動啟用 `build_docker`，或 push 的提交訊息含 `[cpu-verify]` 時執行完整 CPU job。
+其 `cpu-runtime-evidence` artifact 保存來源、安裝清單、日誌及輸出，保留 14 天；
+這些是下載用的 CI 產物，不納入專案原始碼。
