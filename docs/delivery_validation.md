@@ -21,8 +21,8 @@
 | 最終全套 Pytest／Ruff | 400 passed，54 warnings；Ruff 92 檔通過 | 含下載重試／備援測試；見下方命令 |
 | 四份平台 lock／重建命令 | 四份鎖定檔、交付檢查及 uv.lock 一致性通過 | 應用與 pose 均實際重建；Linux 容器結果另列 |
 | 全新 macOS app／pose 環境 | 兩套新環境安裝與三模型實際載入通過 | Python 3.11.14；758 個 MMPose 來源檔核對通過 |
-| Linux amd64 Docker 建置 | 最終程式建置、兩套匯入與 CPU ops、容器內 384 測試通過；下載強化重跑中 | 69d3706 的容器實跑；後續權重下載曾遇 504，見下方紀錄 |
-| Docker runtime 檢查／模型載入 | 待下載強化後的實際結果 | 先前因官方權重下載 504 被跳過，不列為已通過 |
+| Linux amd64 Docker 建置 | 最終 Linux amd64 建置、兩套匯入與 CPU ops、400 項容器測試通過 | 91fbeeb 的完整 CI 成功；先前失敗紀錄保留於下方 |
+| Docker runtime 檢查／模型載入 | 三模型實際載入、來源／權重核對、HTTP smoke 全部通過 | 758 個 MMPose 來源檔；使用相同原圖與原權重 |
 | UI／API 真實圖片與下載 | API／UI 真實圖片、下載及失敗狀態通過 | 8 筆逐眼、6 筆候選距離；結果仍為 unverified |
 | Linux arm64／GPU／獨立泛化 | 未執行 | 不屬本輪完成聲明 |
 
@@ -95,6 +95,35 @@ Browser plugin not available；使用既有離線 Playwright CLI，未安裝瀏�
 發生 HTTP 504，實際模型載入與 HTTP smoke 被跳過。已加入有限次重試、逐檔診斷與官方
 固定 asset API 備援，並將圖片／權重準備移到昂貴建置前。原 canonical 與 SHA 保留；
 404 或雜湊不符仍直接失敗，不以其他模型取代。
+
+## Final Linux CPU Acceptance
+
+[GitHub Actions run 42472036879](https://github.com/PolunLin/animal-eye-metrology/actions/runs/42472036879)
+對 commit `91fbeeb0ae029af6e664d6dfa76d891070e7ad16` 完整成功：
+
+| 項目 | 實際結果 |
+| --- | --- |
+| Linux host unit tests | 400 passed／54 warnings；Ruff 通過 |
+| Docker image | amd64／Linux，ID `sha256:f768ff3d88c5e2aac2b479f341c15b5811d7484a056600719e8d8afa9f794190` |
+| 容器測試 | 400 passed／54 warnings，25.33 秒 |
+| CPU runtime | app Torch 2.9.1+cpu／vision 0.24.1+cpu；pose Torch 2.2.2+cpu／vision 0.17.2+cpu |
+| 真實模型載入 | YOLO26s-seg、SAM 2.1 Tiny、HRNet-W32／AP-10K，全部 ready |
+| 來源／權重 | 三個 SHA、固定 commit、758 個 MMPose 檔案通過 |
+| HTTP smoke | health／OpenAPI／無效上傳／兩動物／兩類距離／候選語意／保存／CSV／PNG／無動物全部通過 |
+
+Linux run：`20261108T105012Z_bef5f82eb15f`；合成空白圖：`20261108T105107Z_3cee677c0a84`。
+HTTP 結果含 8 筆逐眼輸出（4 實際眼 × 2 ROI 條件）與 6 筆候選距離，全部 unverified。
+實際推論容器無網路，沒有臨時下載模型或 GT。
+
+同一原圖／正規化像素的 Linux／macOS 比較：8 個遮罩逐像素相同，重心與 6 筆距離相同；
+HRNet 眼點的最大跨平台歐氏位移為 `0.00006103515625 px`。這是單一既有開發圖的工程一致性，
+不是與 GT 的誤差，也不保證其他圖片或硬體逐像素一致。
+詳見本機新產物 `linux_macos_comparison.json`、`linux_runtime_check.json` 與 `linux_image-inspect.json`。
+
+CI artifact `cpu-runtime-evidence`：ID `13613998475`，2,216,392 bytes，
+ZIP SHA-256 `1aab2f094c9386a7d793b08484be34da574622c3a1073002e5e2591dd626b902`，保留 14 天。
+本機已下載核對 ZIP hash，原始紀錄在 `/tmp/aem_delivery_audit/linux-final/`；
+驗證摘要及跨平台比較在 `outputs/inference/runtime_validation_20261108/`。
 
 ## Scientific Limits
 

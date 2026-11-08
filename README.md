@@ -23,7 +23,7 @@ AI-Based Segmentation and Distance Measurement.
 
 | 部分 | 技術與理由 |
 | --- | --- |
-| 應用 | Python 3.11、Streamlit、HTTP API、本機檔案；無資料庫與登入系統 |
+| 應用 | Python 3.11、Streamlit、FastAPI／Uvicorn、本機檔案；無資料庫與登入系統 |
 | 動物分割 | YOLO26s-seg／Ultralytics 8.4.0；沿用已保存的多模型試跑與 Selected Images 比較 |
 | 眼部定位 | HRNet-W32／AP-10K、固定 MMPose commit；使用動物眼點通道，隔離相依環境 |
 | 眼部分割 | SAM 2.1 Tiny、固定官方 commit；沿用小樣本固定提示比較的基線，無新訓練 |
@@ -64,7 +64,8 @@ docker compose up
 ```
 
 介面預設 [localhost:8517](http://127.0.0.1:8517)，API 預設 [localhost:8000](http://127.0.0.1:8000)。
-建置、掛載與實際驗證狀態見 [Docker](docs/docker.md)。檔案存在不等於完成 Linux 執行驗收。
+Linux amd64 的建置、400 項容器測試、三模型載入與 HTTP 推論已通過；
+建置、掛載與完整證據見 [Docker](docs/docker.md) 與 [驗證紀錄](docs/delivery_validation.md)。
 
 ## API and Access
 

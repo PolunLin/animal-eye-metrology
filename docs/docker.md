@@ -10,9 +10,10 @@
 | 範圍 | 狀態 |
 | --- | --- |
 | 原 macOS arm64 CPU 推論 | 已有歷史實跑，見 [New Image Inference](new_image_inference.md) |
-| 這次乾淨本機環境 | 待本次實際驗證紀錄；見 [Delivery Validation](delivery_validation.md) |
-| Docker 建置／Linux 真實推論 | 待本次實際驗證；見 [Delivery Validation](delivery_validation.md) |
-| Linux arm64、GPU、跨平台逐像素一致 | 未宣稱完成驗證 |
+| 這次乾淨本機環境 | 新 app／pose 環境、三模型載入、API 與桌面／手機介面均通過；見 [Delivery Validation](delivery_validation.md) |
+| Docker 建置／Linux 真實推論 | Linux amd64 建置、400 項容器測試、三模型載入與真實 HTTP smoke 全部通過；[CI](https://github.com/PolunLin/animal-eye-metrology/actions/runs/42472036879) |
+| 跨平台比較 | 同一開發圖的 8 個遮罩逐像素相同、6 筆距離相同；眼點最大差 0.00006103515625 px，不外推其他圖片 |
+| Linux arm64、GPU | 未執行 |
 
 ## Build and Run
 
@@ -51,7 +52,7 @@ Compose 明確使用 `/app/configs/inference.docker.toml`，避免容器載入�
 UI 與 API 共用輸出根目錄時，由 `.inference.lock` 跨程序互斥；忙碌時 API 回傳 409，
 UI／CLI 保留忙碌錯誤。這是本機檔案系統協作鎖，沒有排隊、取消或跨主機調度。
 
-映像建置由 `bootstrap.py --all --root /opt/venvs` 使用 Linux 的兩份平台 lock，
+映像建置由 `bootstrap.py --all --root /opt/venvs --cache-dir /tmp/aem-build-cache` 使用 Linux 的兩份平台 lock，
 保留 `/opt/venvs/environment_app.json` 與 `environment_pose.json` 的實際安裝清單。
 四份 lock 與直接相依來源的關係見 [Setup](setup.md#dependency-sources-and-records)。
 
@@ -73,3 +74,13 @@ docker compose down
 
 MMCV 編譯成功仍需模型載入與 forward 驗證。本機測試與 Linux 容器測試是分開的證據；
 若無法建置或執行，應列出待驗證項目，不能將靜態檢查寫成 Docker 通過。
+
+## Verified Image
+
+驗證 commit：`91fbeeb0ae029af6e664d6dfa76d891070e7ad16`。
+映像 ID：`sha256:f768ff3d88c5e2aac2b479f341c15b5811d7484a056600719e8d8afa9f794190`。
+
+CI 先核對同一既有示範圖與三份權重，再建置映像；推論容器使用 `--network none`。
+驗收包含無效上傳、無動物合成圖、兩類候選距離、保存與 CSV／PNG 下載。
+來源、實際環境清單、建置／測試／推論日誌及輸出保存在該 CI 的 `cpu-runtime-evidence` artifact，
+保留 14 天；永久可查的結論與輸入／產物識別碼見 Delivery Validation。
