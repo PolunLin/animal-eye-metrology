@@ -21,9 +21,9 @@
 | 最終全套 Pytest／Ruff | 384 passed，54 warnings；Ruff 92 檔通過 | 移除兩個本機 Git 快取選項測試後的最終程式；見下方命令 |
 | 四份平台 lock／重建命令 | 四份鎖定檔、交付檢查及 uv.lock 一致性通過 | 應用與 pose 均實際重建；Linux 容器結果另列 |
 | 全新 macOS app／pose 環境 | 兩套新環境安裝與三模型實際載入通過 | Python 3.11.14；758 個 MMPose 來源檔核對通過 |
-| Linux amd64 Docker 建置 | 待實際結果 | 需成功完成映像，不以檔案／Compose 靜態檢查代替 |
+| Linux amd64 Docker 建置 | 首輪建置與兩套環境匯入／CPU ops 通過；最終重跑中 | 首輪容器測試受工作區環境變數影響，已修正測試隔離 |
 | Docker runtime 檢查／模型載入 | 待實際結果 | 檢查來源、版本、權重與實際載入，不等於分割準確度 |
-| UI／API 真實圖片與下載 | API 實際圖片、下載及失敗狀態通過；UI 瀏覽器檢查進行中 | 8 筆逐眼、6 筆候選距離；結果仍為 unverified |
+| UI／API 真實圖片與下載 | API／UI 真實圖片、下載及失敗狀態通過 | 8 筆逐眼、6 筆候選距離；結果仍為 unverified |
 | Linux arm64／GPU／獨立泛化 | 未執行 | 不屬本輪完成聲明 |
 
 ## Commands to Record
@@ -69,6 +69,27 @@ docker compose exec ui python scripts/check_runtime.py --config configs/inferenc
 較早兩輪本機全套曾出現 Streamlit AppTest 30 秒逾時。單獨測試、相同前段順序、全套模組
 收集後的單一測試及後續完整重跑皆通過；未找到確定根因，沒有提高 timeout 或放寬條件。
 CI 保留 `faulthandler_timeout=15`，原失敗日誌保存在本機驗收目錄。
+
+## UI Evidence
+
+新環境介面 `http://127.0.0.1:18517`：既有圖片上傳 → A_r050 對照 → 推論完成 → CSV／JSON／PNG 下載。
+UI run `20261108T095547Z_183662a70f51`：8 筆眼部輸出、6 筆候選距離，全部維持 unverified。
+三類下載與保存檔逐 bytes 相同；1440×1000、390×844 均無水平溢位或 Streamlit 例外，
+console 0 errors／0 warnings；手機切換動物與眼側不重新推論。手機僅 viewport，未驗證實機觸控。
+
+Browser plugin not available；使用既有離線 Playwright CLI，未安裝瀏覽器相依。
+截圖、DOM／console 及下載核對在本機 `/tmp/aem_delivery_audit/`。
+
+## Container Findings Retained
+
+第一輪 Linux 映像可建置，主環境／pose 匯入及 CPU NMS 通過。容器全套測試發現
+`AEM_WORKSPACE=New Image Inference` 被測試繼承，選圖測試因此未進入其預期工作區；
+已由 autouse fixture 隔離 AEM 環境變數，再以容器預設環境重播本機全套，384 passed／54 warnings。
+沒有修改應用的預設工作區或放寬斷言。
+
+原 COCO 自訂 HTTPS 網域憑證不符合主機名；工程 fixture 改由同一官方 S3 儲存位置的有效 HTTPS
+路徑取得。實取 148,266 bytes，SHA-256 `aeb172b088be9b334a97fcd4df1fe89b5730bc5836765a23c82f2b8b4ff3d03b`，
+與原開發圖片完全相同。沒有停用憑證驗證或換圖。
 
 ## Scientific Limits
 

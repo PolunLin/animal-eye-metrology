@@ -34,6 +34,7 @@ REQUIRED_FILES = (
     "scripts/bootstrap.py",
     "scripts/prepare_models.py",
     "scripts/check_runtime.py",
+    "scripts/smoke_api.py",
     "src/animal_eye_metrology/api.py",
     "src/animal_eye_metrology/inference_pipeline.py",
     "src/animal_eye_metrology/eye_pose_worker.py",
@@ -48,6 +49,7 @@ REQUIRED_FILES = (
     "docs/research_history.md",
     "docs/delivery_validation.md",
     "examples/measurements.csv",
+    "examples/input_manifest.csv",
     "examples/README.md",
 )
 
