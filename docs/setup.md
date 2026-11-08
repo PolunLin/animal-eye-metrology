@@ -59,6 +59,21 @@ python3.11 scripts/bootstrap.py --all --root .runtime-preview --dry-run
 要保留已有的 `.runtime` 並建立另一組，可指定全新的 `--root`；配套 inference 設定中的
 `python`、`pose_python` 與 `detector_source` 也須對應新位置。不要讓新設定誤用舊環境。
 
+## Interrupted Builds
+
+下載或編譯中斷後，先讀取對應的 `.runtime/environment_*.json`。只有狀態為
+`failed` 或已停止的 `building`，且平台、目錄、lock 路徑與 SHA-256 相同，才可續跑：
+
+```sh
+python3.11 scripts/bootstrap.py --pose --resume
+```
+
+`--resume` 保留 `previous_attempts`，跳過建立 venv，重新核對並安裝既定套件；
+不接受成功環境、仍活躍的建置程序或已變動的 lock。修正 lock 後需使用新的環境目錄，保留失敗紀錄。
+可用 `--installer pip`／`--installer uv` 明確選擇工具；預設優先使用已安裝的 uv。
+套件快取可用 `--cache-dir` 或 `UV_CACHE_DIR`／`PIP_CACHE_DIR` 指定，不得指向既有研究環境、
+資料或權重目錄。模型原始碼始終從既定官方 HTTPS commit 安裝；執行時不重新下載。
+
 ## Start UI and API
 
 ```sh

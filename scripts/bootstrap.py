@@ -101,47 +101,12 @@ def read_resume_record(root: Path, name: str) -> dict[str, Any]:
     return record
 
 
-def model_source(name: str, commit: str, repository: str, cache: Path | None) -> dict[str, str]:
-    """Keep VCS commit provenance when reusing an explicitly supplied Git checkout."""
-    if cache is None:
-        return {
-            "commit": commit,
-            "repository": repository,
-            "requirement": f"{name} @ git+{repository}@{commit}",
-        }
-    directory = cache.resolve()
-    if not directory.is_dir():
-        raise ValueError(f"Source cache is not a Git directory: {directory}")
-    revision = subprocess.run(
-        ["git", "-C", str(directory), "rev-parse", "HEAD"],
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=30,
-        env=os.environ | {"GIT_NO_LAZY_FETCH": "1"},
-    ).stdout.strip()
-    if revision != commit:
-        raise ValueError(f"Cached {name} HEAD differs from required commit: {revision}")
-    objects = subprocess.run(
-        ["git", "-C", str(directory), "rev-list", "--objects", "--missing=print", "HEAD"],
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=30,
-        env=os.environ | {"GIT_NO_LAZY_FETCH": "1"},
-    ).stdout.splitlines()
-    if any(line.startswith("?") for line in objects):
-        raise ValueError(
-            "Cached source has missing Git objects; use a complete checkout "
-            "rather than a partial sparse cache."
-        )
-    # pip 24's vendored PEP 508 parser needs a nonempty host for git+file.
-    cached_url = directory.as_uri().replace("file://", "file://localhost", 1)
+def model_source(name: str, commit: str, repository: str) -> dict[str, str]:
+    """Record the official immutable VCS source for the selected runtime."""
     return {
         "commit": commit,
         "repository": repository,
-        "cache_repository": str(directory),
-        "requirement": f"{name} @ git+{cached_url}@{commit}",
+        "requirement": f"{name} @ git+{repository}@{commit}",
     }
 
 
@@ -152,8 +117,6 @@ def build_plan(
     uv: str | None,
     *,
     resume: bool = False,
-    sam_source: Path | None = None,
-    pose_source: Path | None = None,
 ) -> dict[str, Any]:
     """Return exact commands; constructing a plan does not write files or use the network."""
     root = root.resolve()
@@ -165,7 +128,6 @@ def build_plan(
             "https://github.com/facebookresearch/sam2.git"
             if name == "app"
             else "https://github.com/open-mmlab/mmpose.git",
-            sam_source if name == "app" else pose_source,
         )
         environment = root / name
         interpreter = environment / "bin/python"
@@ -363,12 +325,6 @@ def main(argv: list[str] | None = None) -> int:
         default="auto",
         help="Use pip explicitly to reuse an existing pip cache, or prefer available uv.",
     )
-    parser.add_argument(
-        "--sam-source", type=Path, help="Optional Git checkout at the pinned SAM commit."
-    )
-    parser.add_argument(
-        "--pose-source", type=Path, help="Optional Git checkout at the pinned MMPose commit."
-    )
     args = parser.parse_args(argv)
     try:
         if sys.version_info[:2] != (3, 11):
@@ -392,8 +348,6 @@ def main(argv: list[str] | None = None) -> int:
             target,
             uv,
             resume=args.resume,
-            sam_source=args.sam_source,
-            pose_source=args.pose_source,
         )
         plan["cache"] = cache_locations(cache, root, environments)
         for item in plan["plans"].values():

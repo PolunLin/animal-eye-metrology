@@ -208,50 +208,6 @@ def test_resume_refuses_completed_or_running_environment(tmp_path: Path, monkeyp
         bootstrap.validate_root(root, ["pose"], resume=True)
 
 
-def test_source_cache_requires_same_commit_and_preserves_vcs_provenance(
-    tmp_path: Path, monkeypatch
-) -> None:
-    repository = tmp_path / "cached source"
-    repository.mkdir()
-    seen = []
-
-    def verified(command, **kwargs):
-        seen.append((command, kwargs))
-        return subprocess.CompletedProcess(
-            command, 0, stdout=bootstrap.SAM_COMMIT + "\n", stderr=""
-        )
-
-    monkeypatch.setattr(bootstrap.subprocess, "run", verified)
-    source = bootstrap.model_source(
-        "SAM-2", bootstrap.SAM_COMMIT, "https://example.test/model.git", repository
-    )
-    cached_url = repository.as_uri().replace("file://", "file://localhost", 1)
-    assert source["requirement"] == f"SAM-2 @ git+{cached_url}@{bootstrap.SAM_COMMIT}"
-    assert source["cache_repository"] == str(repository)
-    assert seen[0][0] == ["git", "-C", str(repository), "rev-parse", "HEAD"]
-    assert seen[0][1]["env"]["GIT_NO_LAZY_FETCH"] == "1"
-    with pytest.raises(ValueError, match="differs from required commit"):
-        bootstrap.model_source(
-            "SAM-2", "different-commit", "https://example.test/model.git", repository
-        )
-
-
-def test_partial_git_source_is_rejected_without_lazy_fetch(tmp_path: Path, monkeypatch) -> None:
-    repository = tmp_path / "sparse-source"
-    repository.mkdir()
-
-    def partial(command, **kwargs):
-        assert kwargs["env"]["GIT_NO_LAZY_FETCH"] == "1"
-        output = bootstrap.SAM_COMMIT if "rev-parse" in command else "?missing-object\n"
-        return subprocess.CompletedProcess(command, 0, stdout=output, stderr="")
-
-    monkeypatch.setattr(bootstrap.subprocess, "run", partial)
-    with pytest.raises(ValueError, match="missing Git objects"):
-        bootstrap.model_source(
-            "SAM-2", bootstrap.SAM_COMMIT, "https://example.test/model.git", repository
-        )
-
-
 def test_cache_overrides_are_explicit_and_keep_legacy_paths_protected(
     tmp_path: Path, monkeypatch
 ) -> None:

@@ -84,3 +84,16 @@ multipart 解析後最多從檔案讀取 `max_upload_bytes + 1` bytes。這是�
 
 測試只使用合成圖片、假推論結果與隔離暫存目錄，涵蓋內容／大小檢查、API 文件、缺少環境、
 忙碌狀態、模型失敗結果、唯讀下載，以及路徑／符號連結越界。不視為模型準確度驗證。
+
+## Engineering Smoke Check
+
+API 與已核對權重準備完成後，可用既有開發圖檢查完整 HTTP 流程：
+
+```sh
+.runtime/app/bin/python scripts/smoke_api.py \
+  --image data/coco/val2017/000000125405.jpg --report outputs/api_smoke.json
+```
+
+此指令不下載圖片或模型。它執行既有 A_r100／A_r050 方法，檢查兩類距離、保存結果、
+CSV／PNG 下載、錯誤上傳及合成空白圖；JSON 報告與退出碼同時保留成功或失敗。
+使用的仍是既有開發圖片，這是工程連通驗證，不新增人工參考或獨立準確度成績。

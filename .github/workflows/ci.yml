@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       build_docker:
-        description: Build and check the Linux amd64 CPU image (no model weights)
+        description: Verify CPU image (downloads model files and one existing demo image)
         required: false
         default: false
         type: boolean
