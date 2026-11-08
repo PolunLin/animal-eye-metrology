@@ -42,6 +42,9 @@ def test_root_import_does_not_load_application_or_model_dependencies(tmp_path: P
 
 def test_legacy_imports_share_canonical_modules_and_preserve_their_specs() -> None:
     for name, location in MODULE_LOCATIONS.items():
+        if name == "training_yolo":
+            # The optional Torch/OpenCV adapter has its own identity test in test_training_yolo.
+            continue
         canonical_name = "animal_eye_metrology." + location.removesuffix(".py").replace("/", ".")
         legacy = importlib.import_module(f"animal_eye_metrology.{name}")
         canonical = importlib.import_module(canonical_name)

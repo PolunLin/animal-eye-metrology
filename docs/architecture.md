@@ -53,18 +53,45 @@ UI／API 使用同一映像、不同程序。本機 CPU 交付沒有資料庫、
 ```text
 animal_eye_metrology/
 ├── core/          configuration, errors, execution lock and file verification
-├── data/          COCO data, analysis and output persistence
+├── data/          COCO data, frozen training subsets, supply audits and outputs
 ├── annotation/    annotations, prompts, review stores and sessions
-├── models/        segmentation and SAM runtime adapters
+├── models/        segmentation, SAM runtime and YOLO training adapters
 ├── inference/     pipeline, workers, capability policy and run artifacts
 ├── measurement/   geometry, mask centroids, distances and frozen references
-├── research/      experiment runners, comparisons and evaluation summaries
+├── research/      training and experiment runners, comparisons and evaluation
 └── ui/            Streamlit workspaces, canvas components and visualization
 ```
 
 新程式使用分組後的完整匯入路徑，例如
 `animal_eye_metrology.measurement.metrology`。既有平層匯入與研究命令保留相容入口，
 相容名稱與新名稱共用同一模組，不產生兩套設定、執行鎖或例外類別。
+
+### Training Tools
+
+訓練相關程式沿用上述責任分工，不另建同名 `training/` 套件：
+
+這些是選用的離線研究工具；一般 UI／API 推論不預先載入訓練 runner 或 YOLO loss 轉接器。
+訓練時才使用指定模型環境，匯入套件根目錄不會因此載入 Torch。
+
+| 程式 | 責任 |
+| --- | --- |
+| `research/training.py` | 離線監督式訓練、模型工作程序與比較彙整 |
+| `data/training_data.py` | 凍結 COCO 訓練子集、原始實例遮罩與資料來源 |
+| `data/segmentation_supply.py` | 研究資料供給與既有接觸範圍檢查，不自行選樣或推論 |
+| `models/training_yolo.py` | 將原生實例遮罩轉接至 YOLO 訓練 loss，不改模型架構 |
+| `scripts/export_training_weights.py` | 已完成 run 的原生權重匯出與重新載入核對 |
+
+舊匯入與獨立命令仍有效；以下兩個入口只顯示使用說明，不啟動訓練：
+
+```sh
+.runtime/app/bin/python -m animal_eye_metrology.research.training --help
+.runtime/app/bin/python -m animal_eye_metrology.training --help
+```
+
+訓練設定仍在 `configs/segmentation_training_pilot.toml`，資料、進度、checkpoint 與
+匯出權重仍使用原本設定的本機路徑。實際執行需備妥相符版本的模型環境與凍結資料。
+目前 runner 沒有 checkpoint resume 模式，新的 run 會拒絕覆寫已存在的模型輸出目錄；
+舊命令相容不代表提供續跑功能。既有研究 manifest 與訓練產物不因程式分類而改寫。
 
 ## Responsibilities
 
