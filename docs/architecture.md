@@ -44,18 +44,40 @@ UI／API 使用同一映像、不同程序。本機 CPU 交付沒有資料庫、
 各入口共用輸出根目錄時，以 `.inference.lock` 跨程序互斥；API 另有程序內鎖。
 忙碌時立即拒絕，沒有排隊；不同根目錄與不同主機不共享此執行限制。
 
+## Python Package Layout
+
+`src/animal_eye_metrology/` 依工作責任分組，避免把推論、介面與研究程式平放在同一層。
+根目錄保留 `api.py`、`cli.py` 與 `__main__.py` 作為穩定入口；`paths.py` 統一解析
+專案根目錄、worker 與來源檔案，不從各子模組的深度推算路徑。
+
+```text
+animal_eye_metrology/
+├── core/          configuration, errors, execution lock and file verification
+├── data/          COCO data, analysis and output persistence
+├── annotation/    annotations, prompts, review stores and sessions
+├── models/        segmentation and SAM runtime adapters
+├── inference/     pipeline, workers, capability policy and run artifacts
+├── measurement/   geometry, mask centroids, distances and frozen references
+├── research/      experiment runners, comparisons and evaluation summaries
+└── ui/            Streamlit workspaces, canvas components and visualization
+```
+
+新程式使用分組後的完整匯入路徑，例如
+`animal_eye_metrology.measurement.metrology`。既有平層匯入與研究命令保留相容入口，
+相容名稱與新名稱共用同一模組，不產生兩套設定、執行鎖或例外類別。
+
 ## Responsibilities
 
 | 模組／目錄 | 職責 |
 | --- | --- |
-| `app/`、`*_view.py` | 操作與顯示；UI 不直接混載兩套 Torch／MMCV |
-| `inference_pipeline.py` | 輸入正規化、串接、逾時／失敗保存、唯一 run |
-| `execution_lock.py` | UI／API／CLI 共用輸出根目錄的協作互斥鎖 |
-| `inference_worker.py`、`eye_pose_worker.py` | 固定模型、來源／權重驗證、原生座標輸出 |
-| `metrology.py`、`inference_artifacts.py` | 遮罩重心、距離配對、圖片與表格 |
-| `inference_capabilities.py` | 十類執行政策、鳥類域外試驗標記 |
+| `app/`、`ui/` | 操作與顯示；UI 不直接混載兩套 Torch／MMCV |
+| `inference/inference_pipeline.py` | 輸入正規化、串接、逾時／失敗保存、唯一 run |
+| `core/execution_lock.py` | UI／API／CLI 共用輸出根目錄的協作互斥鎖 |
+| `inference/inference_worker.py`、`inference/eye_pose_worker.py` | 固定模型、來源／權重驗證、原生座標輸出 |
+| `measurement/`、`inference/inference_artifacts.py` | 遮罩重心、距離配對、圖片與表格 |
+| `inference/inference_capabilities.py` | 十類執行政策、鳥類域外試驗標記 |
 | `configs/`、`requirements/`、`scripts/` | 研究／應用設定、環境與模型準備 |
-| 研究／標註模組 | COCO 探索、人工審核、版本凍結、消融與定義比較 |
+| `research/`、`annotation/` | 人工審核、版本凍結、消融與定義比較 |
 | `tests/` | 合成幾何、完整性、資料保存與失敗行為驗證 |
 
 ## State and Provenance

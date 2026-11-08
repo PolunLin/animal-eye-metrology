@@ -5,10 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from animal_eye_metrology.analysis import REVIEW_FIELDS, analyze
-from animal_eye_metrology.coco import load_coco
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.review_store import (
+from animal_eye_metrology.annotation.review_store import (
     image_eye_condition,
     initialize_image_selections,
     initialize_reviews,
@@ -19,6 +16,9 @@ from animal_eye_metrology.review_store import (
     save_image_selection,
     save_review,
 )
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.data.analysis import REVIEW_FIELDS, analyze
+from animal_eye_metrology.data.coco import load_coco
 
 DECISIONS = {
     "left_eye_visibility": "Yes",

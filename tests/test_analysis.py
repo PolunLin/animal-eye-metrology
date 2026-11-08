@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from animal_eye_metrology.analysis import REVIEW_MANUAL_FIELDS, analyze
-from animal_eye_metrology.coco import load_coco
-from animal_eye_metrology.review_sample import sample_images
+from animal_eye_metrology.annotation.review_sample import sample_images
+from animal_eye_metrology.data.analysis import REVIEW_MANUAL_FIELDS, analyze
+from animal_eye_metrology.data.coco import load_coco
 
 
 def test_counts_and_overlapping_candidate_groups(local_config: Path) -> None:

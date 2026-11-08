@@ -10,15 +10,15 @@ pytest.importorskip("pycocotools.mask")
 
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
-from animal_eye_metrology.analysis import analyze  # noqa: E402
-from animal_eye_metrology.cli import main  # noqa: E402
-from animal_eye_metrology.coco import load_coco  # noqa: E402
-from animal_eye_metrology.review_store import (  # noqa: E402
+from animal_eye_metrology.annotation.review_store import (  # noqa: E402
     initialize_reviews,
     load_reviews,
     review_key,
     save_review,
 )
+from animal_eye_metrology.cli import main  # noqa: E402
+from animal_eye_metrology.data.analysis import analyze  # noqa: E402
+from animal_eye_metrology.data.coco import load_coco  # noqa: E402
 
 
 def test_explorer_save_switch_instance_and_reopen(

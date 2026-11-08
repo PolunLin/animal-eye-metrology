@@ -8,15 +8,15 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.inference_artifacts import (
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.inference.inference_artifacts import (
     ANIMAL_COLORS,
     animal_segmentation_views,
     build_measurements,
     csv_bytes,
     render_overlays,
 )
-from animal_eye_metrology.metrology import mask_centroid
+from animal_eye_metrology.measurement.metrology import mask_centroid
 
 
 def eye(animal: str, side: str, center: tuple | None, **updates: object) -> dict:

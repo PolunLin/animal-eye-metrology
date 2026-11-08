@@ -10,8 +10,7 @@ import pytest
 Image = pytest.importorskip("PIL.Image")
 np = pytest.importorskip("numpy")
 
-from animal_eye_metrology.errors import Phase1Error  # noqa: E402
-from animal_eye_metrology.eye_annotations import (  # noqa: E402
+from animal_eye_metrology.annotation.eye_annotations import (  # noqa: E402
     FIELDS,
     empty_geometry,
     initialize_store,
@@ -21,7 +20,8 @@ from animal_eye_metrology.eye_annotations import (  # noqa: E402
     rasterize,
     save_annotation,
 )
-from animal_eye_metrology.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.core.errors import Phase1Error  # noqa: E402
+from animal_eye_metrology.core.verification import sha256_file  # noqa: E402
 
 
 def target() -> dict[str, str]:
@@ -156,7 +156,7 @@ def test_missing_and_uncertain_eyes_stay_explicit_without_fake_masks(tmp_path: P
 def test_csv_failure_rolls_back_new_files_and_corruption_is_reported(
     tmp_path: Path, monkeypatch
 ) -> None:
-    import animal_eye_metrology.eye_annotations as module
+    import animal_eye_metrology.annotation.eye_annotations as module
 
     targets = [target()]
     initialize_store(tmp_path, targets, "dataset-sha")
@@ -187,8 +187,8 @@ def test_streamlit_draft_save_reload_uses_only_phase3(tmp_path, local_config, mo
     from streamlit.testing.v1 import AppTest
 
     from animal_eye_metrology.cli import main
-    from animal_eye_metrology.coco import load_coco
-    from animal_eye_metrology.verification import sha256_file
+    from animal_eye_metrology.core.verification import sha256_file
+    from animal_eye_metrology.data.coco import load_coco
 
     assert main(["analyze", "--config", str(local_config)]) == 0
     directory = local_config.parent / "images"

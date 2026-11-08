@@ -11,11 +11,12 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from animal_eye_metrology import inference_pipeline as pipeline
-from animal_eye_metrology.execution_lock import InferenceBusyError
+from animal_eye_metrology.core.execution_lock import InferenceBusyError
+from animal_eye_metrology.inference import inference_pipeline as pipeline
+from animal_eye_metrology.paths import PROJECT_ROOT
 
 LOGGER = logging.getLogger(__name__)
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = PROJECT_ROOT
 RUN_ID = re.compile(r"\d{8}T\d{6}Z_[0-9a-f]{12}\Z")
 
 

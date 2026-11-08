@@ -9,7 +9,7 @@ import pytest
 
 Image = pytest.importorskip("PIL.Image")
 
-from animal_eye_metrology.annotation_session import (  # noqa: E402
+from animal_eye_metrology.annotation.annotation_session import (  # noqa: E402
     AnnotationSession,
     main,
     prepare,
@@ -17,9 +17,7 @@ from animal_eye_metrology.annotation_session import (  # noqa: E402
     status,
     verify_session,
 )
-from animal_eye_metrology.coco import load_coco  # noqa: E402
-from animal_eye_metrology.errors import Phase1Error  # noqa: E402
-from animal_eye_metrology.eye_annotations import (  # noqa: E402
+from animal_eye_metrology.annotation.eye_annotations import (  # noqa: E402
     FIELDS,
     V2_PROTOCOL_VERSION,
     empty_geometry,
@@ -27,7 +25,9 @@ from animal_eye_metrology.eye_annotations import (  # noqa: E402
     load_targets,
     save_annotation,
 )
-from animal_eye_metrology.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.core.errors import Phase1Error  # noqa: E402
+from animal_eye_metrology.core.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.data.coco import load_coco  # noqa: E402
 
 
 @pytest.fixture

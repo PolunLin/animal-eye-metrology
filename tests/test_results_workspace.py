@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from animal_eye_metrology.results_workspace import ResultsWorkspaceError, load_results_bundle
+from animal_eye_metrology.ui.results_workspace import ResultsWorkspaceError, load_results_bundle
 
 SNAPSHOT = "a" * 64
 

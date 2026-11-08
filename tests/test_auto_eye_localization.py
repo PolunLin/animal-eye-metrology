@@ -9,9 +9,9 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from animal_eye_metrology import auto_eye_localization as auto
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.metrology import build_measurements
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.measurement.metrology import build_measurements
+from animal_eye_metrology.research import auto_eye_localization as auto
 
 
 def test_config_preserves_virtual_environment_executable_symlink() -> None:

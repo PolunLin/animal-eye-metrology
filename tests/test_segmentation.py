@@ -12,9 +12,9 @@ pytest.importorskip("pycocotools")
 from pycocotools import mask as mask_utils  # noqa: E402
 from pycocotools.coco import COCO  # noqa: E402
 
-from animal_eye_metrology.coco import Category, CocoDataset, ImageRecord  # noqa: E402
-from animal_eye_metrology.errors import Phase1Error  # noqa: E402
-from animal_eye_metrology.segmentation import (  # noqa: E402
+from animal_eye_metrology.core.errors import Phase1Error  # noqa: E402
+from animal_eye_metrology.data.coco import Category, CocoDataset, ImageRecord  # noqa: E402
+from animal_eye_metrology.models.segmentation import (  # noqa: E402
     animal_class_mapping,
     coco_predictions,
     evaluate_predictions,
@@ -31,23 +31,28 @@ def rle(mask):
 def test_source_provenance_requires_public_methods_but_not_local_research_archives(
     tmp_path: Path,
 ) -> None:
-    from animal_eye_metrology.phase2 import project_source_hashes
-    from animal_eye_metrology.verification import sha256_file
+    from animal_eye_metrology.core.verification import sha256_file
+    from animal_eye_metrology.research.phase2 import project_source_hashes
 
     for relative in (
         "pyproject.toml",
         "uv.lock",
         "docs/methodology.md",
-        "src/animal_eye_metrology/phase2.py",
+        "src/animal_eye_metrology/research/phase2.py",
+        "src/animal_eye_metrology/core/__init__.py",
+        "src/animal_eye_metrology/ui/__init__.py",
     ):
         path = tmp_path / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(f"SYNTHETIC PROVENANCE FIXTURE: {relative}\n")
     public = project_source_hashes(tmp_path)
     assert public["docs/methodology.md"] == sha256_file(tmp_path / "docs/methodology.md")
-    assert public["src/animal_eye_metrology/phase2.py"] == sha256_file(
-        tmp_path / "src/animal_eye_metrology/phase2.py"
+    assert public["src/animal_eye_metrology/research/phase2.py"] == sha256_file(
+        tmp_path / "src/animal_eye_metrology/research/phase2.py"
     )
+    for group in ("core", "ui"):
+        relative = f"src/animal_eye_metrology/{group}/__init__.py"
+        assert public[relative] == sha256_file(tmp_path / relative)
     historical = tmp_path / "docs/phase2_instance_segmentation.md"
     assert str(historical.relative_to(tmp_path)) not in public
     historical.write_text("SYNTHETIC LOCAL ARCHIVE; NOT RESEARCH RESULTS.\n")
@@ -61,7 +66,7 @@ def test_source_provenance_requires_public_methods_but_not_local_research_archiv
 
 
 def test_candidate_recovery_counts_only_matched_eligible_ids_in_the_same_image() -> None:
-    from animal_eye_metrology.phase2 import candidate_recovery
+    from animal_eye_metrology.research.phase2 import candidate_recovery
 
     feasibility = [
         {

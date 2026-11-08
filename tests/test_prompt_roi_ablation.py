@@ -12,9 +12,9 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from animal_eye_metrology import prompt_roi_ablation as ablation
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.verification import sha256_file
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.core.verification import sha256_file
+from animal_eye_metrology.research import prompt_roi_ablation as ablation
 
 
 def case() -> dict:

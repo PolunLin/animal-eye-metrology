@@ -9,10 +9,10 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from animal_eye_metrology import inference_worker
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.inference_capabilities import COCO_ANIMAL_CATEGORIES
-from animal_eye_metrology.inference_worker import detection_records, segment_case
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.inference import inference_worker
+from animal_eye_metrology.inference.inference_capabilities import COCO_ANIMAL_CATEGORIES
+from animal_eye_metrology.inference.inference_worker import detection_records, segment_case
 
 
 class Predictor:

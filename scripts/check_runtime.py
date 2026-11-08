@@ -27,8 +27,8 @@ import streamlit
 import torch
 import torchvision
 import uvicorn
-from animal_eye_metrology.inference_pipeline import load_config, preflight
-from animal_eye_metrology.sam_runtime import load_predictor, settings, validate_source
+from animal_eye_metrology.inference.inference_pipeline import load_config, preflight
+from animal_eye_metrology.models.sam_runtime import load_predictor, settings, validate_source
 from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 from ultralytics import YOLO
@@ -86,7 +86,7 @@ import torch
 from mmcv.ops import nms
 from mmpose.apis import init_model
 from mmpose.utils import register_all_modules
-from animal_eye_metrology.eye_pose_worker import CONFIG
+from animal_eye_metrology.inference.eye_pose_worker import CONFIG
 
 config = Path(sys.argv[1]).resolve()
 cfg = tomllib.loads(config.read_text())

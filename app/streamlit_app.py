@@ -12,13 +12,7 @@ from typing import Any
 import streamlit as st
 from PIL import Image
 
-from animal_eye_metrology.analysis import AnalysisResult, analyze
-from animal_eye_metrology.annotation_view import eye_mask_workspace
-from animal_eye_metrology.coco import CocoDataset, load_coco
-from animal_eye_metrology.config import load_config
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.prompt_view import eye_prompt_workspace
-from animal_eye_metrology.review_store import (
+from animal_eye_metrology.annotation.review_store import (
     CHOICES,
     SELECTION_STATUSES,
     image_eye_condition,
@@ -30,7 +24,13 @@ from animal_eye_metrology.review_store import (
     save_image_selection,
     save_review,
 )
-from animal_eye_metrology.visualization import render_instance_overlay
+from animal_eye_metrology.core.config import load_config
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.data.analysis import AnalysisResult, analyze
+from animal_eye_metrology.data.coco import CocoDataset, load_coco
+from animal_eye_metrology.ui.annotation_view import eye_mask_workspace
+from animal_eye_metrology.ui.prompt_view import eye_prompt_workspace
+from animal_eye_metrology.ui.visualization import render_instance_overlay
 
 ROOT = Path(__file__).resolve().parents[1]
 LOGGER = logging.getLogger(__name__)
@@ -318,7 +318,7 @@ def main() -> None:
     st.caption("資料審核、眼部標註與實驗成果；保留每一步的研究依據。")
     annotation_session = None
     if session_path := os.environ.get("AEM_ANNOTATION_SESSION"):
-        from animal_eye_metrology.annotation_session import read_session, verify_session
+        from animal_eye_metrology.annotation.annotation_session import read_session, verify_session
 
         try:
             annotation_session = read_session(Path(session_path))
@@ -349,12 +349,12 @@ def main() -> None:
         else 0,
     )
     if workspace == "Results Explorer":
-        from animal_eye_metrology.results_view import results_workspace
+        from animal_eye_metrology.ui.results_view import results_workspace
 
         results_workspace(ROOT)
         return
     if workspace == "New Image Inference":
-        from animal_eye_metrology.inference_view import inference_workspace
+        from animal_eye_metrology.ui.inference_view import inference_workspace
 
         inference_workspace(ROOT)
         return

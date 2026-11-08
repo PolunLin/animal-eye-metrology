@@ -4,8 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from animal_eye_metrology import eye_poc, sam_runtime
-from animal_eye_metrology.errors import Phase1Error
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.models import sam_runtime
+from animal_eye_metrology.research import eye_poc
 
 ROOT = Path(__file__).resolve().parents[1]
 

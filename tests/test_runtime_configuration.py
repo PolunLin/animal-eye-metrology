@@ -1,12 +1,14 @@
 """The clean runtime changes deployment paths, not the approved model or geometry policy."""
 
+import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
 import pytest
 
-from animal_eye_metrology.inference_pipeline import load_config
-from animal_eye_metrology.sam_runtime import settings
+from animal_eye_metrology.inference.inference_pipeline import load_config
+from animal_eye_metrology.models.sam_runtime import settings
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIGS = ROOT / "configs"
@@ -75,3 +77,22 @@ def test_api_defaults_to_clean_runtime_config(monkeypatch: pytest.MonkeyPatch) -
     assert create_app().state.config_path == CONFIGS / "inference.runtime.toml"
     monkeypatch.setenv("AEM_INFERENCE_CONFIG", str(CONFIGS / "inference.docker.toml"))
     assert create_app().state.config_path == CONFIGS / "inference.docker.toml"
+
+
+def test_moved_pose_worker_runs_directly_outside_the_project(tmp_path: Path) -> None:
+    """The isolated pose interpreter receives a file path, rather than an installed app module."""
+    from animal_eye_metrology.paths import PROJECT_ROOT, module_source
+
+    assert PROJECT_ROOT == ROOT
+    worker = module_source("eye_pose_worker")
+    assert worker == ROOT / "src/animal_eye_metrology/inference/eye_pose_worker.py"
+    result = subprocess.run(
+        [sys.executable, str(worker), "--help"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "--request" in result.stdout

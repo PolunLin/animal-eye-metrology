@@ -13,7 +13,7 @@ pytest.importorskip("PIL.Image")
 from PIL import Image, ImageDraw  # noqa: E402
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
-from animal_eye_metrology import inference_view as view  # noqa: E402
+from animal_eye_metrology.ui import inference_view as view  # noqa: E402
 
 
 class Upload(io.BytesIO):
@@ -150,7 +150,7 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]
     monkeypatch.setattr(view.st, "file_uploader", lambda *args, **kwargs: upload)
     app = AppTest.from_string(
         "from pathlib import Path\n"
-        "from animal_eye_metrology.inference_view import inference_workspace\n"
+        "from animal_eye_metrology.ui.inference_view import inference_workspace\n"
         f"inference_workspace(Path({str(tmp_path)!r}))\n",
         default_timeout=20,
     )

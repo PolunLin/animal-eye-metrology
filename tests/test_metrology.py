@@ -9,8 +9,8 @@ import pytest
 np = pytest.importorskip("numpy")
 Image = pytest.importorskip("PIL.Image")
 
-from animal_eye_metrology.errors import Phase1Error  # noqa: E402
-from animal_eye_metrology.metrology import (  # noqa: E402
+from animal_eye_metrology.core.errors import Phase1Error  # noqa: E402
+from animal_eye_metrology.measurement.metrology import (  # noqa: E402
     build_measurements,
     euclidean_distance,
     mask_centroid,
@@ -68,7 +68,7 @@ def test_empty_masks_invalid_encodings_and_undefined_distances() -> None:
 
 
 def test_eye_comparison_known_displacement_and_undefined_measurements() -> None:
-    from animal_eye_metrology.eye_comparison import distance_statistics, eye_statistics
+    from animal_eye_metrology.research.eye_comparison import distance_statistics, eye_statistics
 
     ref, pred = np.zeros((6, 6), dtype=np.uint8), np.zeros((6, 6), dtype=np.uint8)
     ref[0, 0], pred[4, 3] = 1, 1
@@ -91,7 +91,7 @@ def test_eye_comparison_known_displacement_and_undefined_measurements() -> None:
 
 
 def test_summary_keeps_failed_and_empty_targets_in_denominators() -> None:
-    from animal_eye_metrology.eye_comparison import MODELS, distance_statistics, summarize
+    from animal_eye_metrology.research.eye_comparison import MODELS, distance_statistics, summarize
 
     eyes, distances = [], []
     for model in MODELS:
@@ -173,12 +173,12 @@ def test_pairs_use_same_image_same_animal_binocular_and_distinct_right_eyes() ->
 
 @pytest.fixture
 def synthetic_baseline(local_config: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict, object]:
-    from animal_eye_metrology import measurement_baseline
+    from animal_eye_metrology.annotation.eye_annotations import initialize_store, save_annotation
     from animal_eye_metrology.cli import main
-    from animal_eye_metrology.coco import load_coco
-    from animal_eye_metrology.eye_annotations import initialize_store, save_annotation
-    from animal_eye_metrology.measurement_baseline import read_settings
-    from animal_eye_metrology.verification import sha256_file
+    from animal_eye_metrology.core.verification import sha256_file
+    from animal_eye_metrology.data.coco import load_coco
+    from animal_eye_metrology.measurement import measurement_baseline
+    from animal_eye_metrology.measurement.measurement_baseline import read_settings
 
     assert main(["analyze", "--config", str(local_config)]) == 0
     root = local_config.parent
@@ -254,7 +254,7 @@ def synthetic_baseline(local_config: Path, monkeypatch: pytest.MonkeyPatch) -> t
 
 
 def test_baseline_requires_the_original_protocol_document(synthetic_baseline) -> None:
-    from animal_eye_metrology import measurement_baseline
+    from animal_eye_metrology.measurement import measurement_baseline
 
     cfg, data = synthetic_baseline
     protocol = measurement_baseline.PROTOCOL_DOCUMENTS[cfg["snapshot"]["protocol_version"]]
@@ -265,14 +265,14 @@ def test_baseline_requires_the_original_protocol_document(synthetic_baseline) ->
 
 
 def test_freeze_replays_after_live_gt_changes_and_rejects_tampering(synthetic_baseline) -> None:
-    from animal_eye_metrology.eye_annotations import (
+    from animal_eye_metrology.annotation.eye_annotations import (
         load_annotations,
         load_geometry,
         save_annotation,
     )
-    from animal_eye_metrology.measurement_baseline import run, verify
-    from animal_eye_metrology.phase2 import read_csv
-    from animal_eye_metrology.verification import sha256_file
+    from animal_eye_metrology.core.verification import sha256_file
+    from animal_eye_metrology.measurement.measurement_baseline import run, verify
+    from animal_eye_metrology.research.phase2 import read_csv
 
     cfg, data = synthetic_baseline
     source = cfg["data"]["ground_truth_directory"]
@@ -314,13 +314,13 @@ def test_freeze_replays_after_live_gt_changes_and_rejects_tampering(synthetic_ba
 
 
 def test_latest_pending_version_never_falls_back_to_older_accepted(synthetic_baseline) -> None:
-    from animal_eye_metrology.eye_annotations import (
+    from animal_eye_metrology.annotation.eye_annotations import (
         load_annotations,
         load_geometry,
         save_annotation,
     )
-    from animal_eye_metrology.measurement_baseline import run
-    from animal_eye_metrology.phase2 import read_csv
+    from animal_eye_metrology.measurement.measurement_baseline import run
+    from animal_eye_metrology.research.phase2 import read_csv
 
     cfg, data = synthetic_baseline
     source = cfg["data"]["ground_truth_directory"]

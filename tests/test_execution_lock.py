@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from animal_eye_metrology.execution_lock import InferenceBusyError, inference_execution_lock
+from animal_eye_metrology.core.execution_lock import InferenceBusyError, inference_execution_lock
 
 
 def test_second_open_is_rejected_and_lock_file_is_reused(tmp_path: Path) -> None:
@@ -35,7 +35,7 @@ def test_real_subprocess_cannot_enter_until_parent_releases_lock(tmp_path: Path)
     code = """
 import sys
 from pathlib import Path
-from animal_eye_metrology.execution_lock import InferenceBusyError, inference_execution_lock
+from animal_eye_metrology.core.execution_lock import InferenceBusyError, inference_execution_lock
 try:
     with inference_execution_lock(Path(sys.argv[1])):
         pass

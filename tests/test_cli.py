@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from animal_eye_metrology.analysis import REVIEW_FIELDS, REVIEW_MANUAL_FIELDS
 from animal_eye_metrology.cli import main
-from animal_eye_metrology.config import load_config
+from animal_eye_metrology.core.config import load_config
+from animal_eye_metrology.data.analysis import REVIEW_FIELDS, REVIEW_MANUAL_FIELDS
 
 
 def test_annotation_only_cli_produces_traceable_reproducible_artifacts(local_config: Path) -> None:
@@ -56,7 +56,7 @@ def test_failed_visualization_does_not_publish_partial_results(
     def fail_render(*args: object, **kwargs: object) -> None:
         raise OSError("Simulated local image read failure")
 
-    monkeypatch.setattr("animal_eye_metrology.outputs.render_contact_sheets", fail_render)
+    monkeypatch.setattr("animal_eye_metrology.data.outputs.render_contact_sheets", fail_render)
     assert main(["analyze", "--config", str(local_config), "--contact-sheets"]) == 2
     assert not (local_config.parent / "result").exists()
     assert not list(local_config.parent.glob(".phase1-*"))

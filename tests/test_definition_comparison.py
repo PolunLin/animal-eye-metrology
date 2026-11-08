@@ -9,20 +9,20 @@ import pytest
 np = pytest.importorskip("numpy")
 Image = pytest.importorskip("PIL.Image")
 
-from animal_eye_metrology import definition_comparison as comparison  # noqa: E402
-from animal_eye_metrology.errors import Phase1Error  # noqa: E402
-from animal_eye_metrology.eye_annotations import (  # noqa: E402
+from animal_eye_metrology.annotation.eye_annotations import (  # noqa: E402
     PROTOCOL_VERSION,
     V2_PROTOCOL_VERSION,
     empty_geometry,
     initialize_store,
     save_annotation,
 )
-from animal_eye_metrology.eye_comparison import distance_statistics, eye_statistics  # noqa: E402
-from animal_eye_metrology.measurement_baseline import COORDINATES, derive, write_csv  # noqa: E402
-from animal_eye_metrology.metrology import build_measurements  # noqa: E402
-from animal_eye_metrology.phase2 import write_json  # noqa: E402
-from animal_eye_metrology.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.core.errors import Phase1Error  # noqa: E402
+from animal_eye_metrology.core.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.measurement.measurement_baseline import COORDINATES, derive, write_csv  # noqa: E402
+from animal_eye_metrology.measurement.metrology import build_measurements  # noqa: E402
+from animal_eye_metrology.research import definition_comparison as comparison  # noqa: E402
+from animal_eye_metrology.research.eye_comparison import distance_statistics, eye_statistics  # noqa: E402
+from animal_eye_metrology.research.phase2 import write_json  # noqa: E402
 
 
 def _hashes(directory: Path, excluded: set[str]) -> dict[str, str]:

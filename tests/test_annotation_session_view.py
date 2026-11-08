@@ -16,15 +16,15 @@ from test_annotation_session import (  # noqa: E402
     annotation_session,  # noqa: F401 - shared synthetic fixture
 )
 
-from animal_eye_metrology.annotation_session import (  # noqa: E402
+from animal_eye_metrology.annotation.annotation_session import (  # noqa: E402
     AnnotationSession,
     prepare,
     read_session,
     status,
 )
-from animal_eye_metrology.coco import load_coco  # noqa: E402
-from animal_eye_metrology.eye_annotations import V2_PROTOCOL_VERSION  # noqa: E402
-from animal_eye_metrology.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.annotation.eye_annotations import V2_PROTOCOL_VERSION  # noqa: E402
+from animal_eye_metrology.core.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.data.coco import load_coco  # noqa: E402
 
 APP = Path(__file__).resolve().parents[1] / "app/streamlit_app.py"
 
