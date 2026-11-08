@@ -4,8 +4,8 @@ from zipfile import ZIP_STORED, ZipFile
 
 import pytest
 
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.verification import verify_file
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.core.verification import verify_file
 
 
 def test_hash_and_zip_crc_and_member_check(tmp_path: Path) -> None:

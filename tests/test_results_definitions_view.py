@@ -19,9 +19,9 @@ from test_definition_comparison import (  # noqa: E402
     comparison_config,  # noqa: F401 - imported pytest fixture
 )
 
-from animal_eye_metrology import definition_comparison as comparison  # noqa: E402
-from animal_eye_metrology import results_view  # noqa: E402
-from animal_eye_metrology.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.core.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.research import definition_comparison as comparison  # noqa: E402
+from animal_eye_metrology.ui import results_view  # noqa: E402
 
 APP = Path(__file__).resolve().parents[1] / "app/streamlit_app.py"
 

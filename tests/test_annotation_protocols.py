@@ -12,8 +12,7 @@ pytest.importorskip("numpy")
 from test_eye_annotations import geometry, review, target  # noqa: E402
 from test_metrology import synthetic_baseline  # noqa: E402, F401 - imported pytest fixture
 
-from animal_eye_metrology.errors import Phase1Error  # noqa: E402
-from animal_eye_metrology.eye_annotations import (  # noqa: E402
+from animal_eye_metrology.annotation.eye_annotations import (  # noqa: E402
     FIELDS,
     PROTOCOL_VERSION,
     V2_PROTOCOL_VERSION,
@@ -22,9 +21,10 @@ from animal_eye_metrology.eye_annotations import (  # noqa: E402
     load_geometry,
     save_annotation,
 )
-from animal_eye_metrology.measurement_baseline import read_settings, run, verify  # noqa: E402
-from animal_eye_metrology.phase2 import read_csv  # noqa: E402
-from animal_eye_metrology.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.core.errors import Phase1Error  # noqa: E402
+from animal_eye_metrology.core.verification import sha256_file  # noqa: E402
+from animal_eye_metrology.measurement.measurement_baseline import read_settings, run, verify  # noqa: E402
+from animal_eye_metrology.research.phase2 import read_csv  # noqa: E402
 
 
 def _files(root: Path) -> dict[str, bytes]:

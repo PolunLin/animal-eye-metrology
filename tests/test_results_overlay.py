@@ -6,8 +6,8 @@ import pytest
 
 Image = pytest.importorskip("PIL.Image")
 
-from animal_eye_metrology.errors import Phase1Error  # noqa: E402
-from animal_eye_metrology.results_overlay import (  # noqa: E402
+from animal_eye_metrology.core.errors import Phase1Error  # noqa: E402
+from animal_eye_metrology.ui.results_overlay import (  # noqa: E402
     BACKGROUND,
     BINOCULAR_LINE,
     POINT,

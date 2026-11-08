@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.eye_prompts import (
+from animal_eye_metrology.annotation.eye_prompts import (
     crop_for_prompt,
     latest_prompt,
     load_prompts,
     save_prompt,
     validate_prompt,
 )
+from animal_eye_metrology.core.errors import Phase1Error
 
 
 def target() -> dict[str, str]:
@@ -79,8 +79,8 @@ def test_native_logits_restore_to_known_original_grid_and_detect_corruption(tmp_
     import numpy as np
     from PIL import Image
 
-    from animal_eye_metrology.eye_poc import verify_run
-    from animal_eye_metrology.verification import sha256_file
+    from animal_eye_metrology.core.verification import sha256_file
+    from animal_eye_metrology.research.eye_poc import verify_run
 
     Image.new("RGB", (8, 6), "gray").save(tmp_path / "input.png")
     (tmp_path / "request.json").write_text(json.dumps({"roi_xyxy": [2, 1, 5, 3]}))
@@ -120,8 +120,8 @@ def test_prompt_workspace_saves_and_reopens_without_eye_masks(
     from PIL import Image
     from streamlit.testing.v1 import AppTest
 
-    from animal_eye_metrology.coco import load_coco
-    from animal_eye_metrology.verification import sha256_file
+    from animal_eye_metrology.core.verification import sha256_file
+    from animal_eye_metrology.data.coco import load_coco
 
     dataset = load_coco(local_config.parent / "annotations.json")
     image, ann = dataset.images[10], dataset.annotations[1001]
@@ -149,7 +149,7 @@ def test_prompt_workspace_saves_and_reopens_without_eye_masks(
     monkeypatch.setenv("AEM_CONFIG", str(local_config))
     monkeypatch.setenv("AEM_WORKSPACE", "Eye Segmentation Prompts")
     monkeypatch.setattr(
-        "animal_eye_metrology.eye_poc.settings",
+        "animal_eye_metrology.research.eye_poc.settings",
         lambda _: {
             "proposal_csv": proposal,
             "prompts_directory": prompt_dir,

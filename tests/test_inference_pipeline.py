@@ -3,6 +3,7 @@
 import csv
 import io
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -10,8 +11,8 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from animal_eye_metrology import inference_pipeline as pipeline
-from animal_eye_metrology.inference_capabilities import (
+from animal_eye_metrology.inference import inference_pipeline as pipeline
+from animal_eye_metrology.inference.inference_capabilities import (
     COCO_ANIMAL_CATEGORIES,
     category_capability,
 )
@@ -67,6 +68,43 @@ def test_configuration_rejects_accidental_return_to_three_category_scope(tmp_pat
     narrowed.write_text(text.replace(old_line, prefix + '["dog", "bear", "giraffe"]'))
     with pytest.raises(ValueError, match="all ten COCO"):
         pipeline.load_config(narrowed)
+
+
+@pytest.mark.parametrize("stage", ["detection", "localization", "segmentation"])
+def test_workers_resolve_package_sources_after_folder_migration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stage: str
+) -> None:
+    cfg = pipeline.load_config(CONFIG)
+    directory = tmp_path / "run"
+    directory.mkdir()
+    output = directory / ("pose/pose_results.json" if stage == "localization" else f"{stage}.json")
+    calls: list[tuple[list[str], dict[str, Any]]] = []
+
+    def execute(command: list[str], **options: Any) -> pipeline.subprocess.CompletedProcess:
+        calls.append((command, options))
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text('{"results": []}')
+        return pipeline.subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(pipeline.subprocess, "run", execute)
+    result = {"execution": []}
+    assert pipeline._run_worker(cfg, directory, stage, {}, result) == {"results": []}
+    command, options = calls[0]
+    project = CONFIG.parents[1]
+    assert Path(options["env"]["PYTHONPATH"].split(os.pathsep)[-1]) == project / "src"
+    assert options["cwd"] == project
+    if stage == "localization":
+        assert command[:2] == [
+            str(cfg["pose_python"]),
+            str(project / "src/animal_eye_metrology/inference/eye_pose_worker.py"),
+        ]
+        assert Path(command[1]).is_file()
+    else:
+        assert command[:3] == [
+            str(cfg["python"]),
+            "-m",
+            "animal_eye_metrology.inference.inference_worker",
+        ]
 
 
 @pytest.mark.parametrize("mode,pixel", [("RGBA", (0, 0, 0, 0)), ("LA", (0, 0))])
@@ -408,6 +446,12 @@ def test_partial_stage_failures_preserve_candidates_and_export_unavailable_pairs
     assert manifest["research_reference_used"] is False
     assert manifest["measurement_qualification"] == "unverified"
     assert manifest["source_unchanged_during_run"] is True
+    assert {
+        "inference/inference_pipeline.py",
+        "measurement/metrology.py",
+        "core/__init__.py",
+        "ui/__init__.py",
+    } <= manifest["source_sha256"].keys()
     assert result["status"] == (
         "failed" if scenario == "sam_global_failure" else "completed_with_issues"
     )

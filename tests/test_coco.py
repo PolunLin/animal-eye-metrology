@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-from animal_eye_metrology.coco import load_coco
-from animal_eye_metrology.errors import Phase1Error
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.data.coco import load_coco
 
 
 def test_metadata_categories_and_input_digest(local_config: Path) -> None:

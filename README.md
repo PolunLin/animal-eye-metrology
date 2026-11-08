@@ -112,7 +112,7 @@ Notebook 環境獨立於模型環境；完整推論仍需本機權重與配套�
 
 ```text
 app/                         Streamlit entry point and drawing components
-src/animal_eye_metrology/    Pipeline, model workers, measurement, review and API
+src/animal_eye_metrology/    API/CLI entry points and responsibility-based Python packages
 configs/                     Application and frozen research configurations
 requirements/                Runtime and build dependency definitions
 notebooks/                   Step-by-step Python demo; recorded or live inference
@@ -124,6 +124,22 @@ Dockerfile, compose.yaml     CPU container and services
 .env.example                 Non-secret configuration template
 data/, weights/, outputs/    Local assets and generated artifacts; ignored by Git
 ```
+
+Python 程式依責任分成八個模組資料夾：
+
+| 資料夾 | 主要責任 |
+| --- | --- |
+| `core/` | 設定、例外、檔案驗證與執行鎖 |
+| `data/` | COCO 讀取、資料分析與輸出 |
+| `annotation/` | 人工標註、審核、提示與版本保存 |
+| `models/` | 動物分割與 SAM 模型介面 |
+| `inference/` | 推論流程、子程序、候選結果與產物 |
+| `measurement/` | 眼部 ROI、遮罩重心、距離與參考重算 |
+| `research/` | 模型比較、自動定位與消融研究程式 |
+| `ui/` | Streamlit 工作區、畫布與視覺化 |
+
+`api.py`、`cli.py` 與 `__main__.py` 保留在套件根目錄，API 啟動方式與命令列入口不變。
+各資料夾的依賴與執行分工見 [Architecture](docs/architecture.md#python-package-layout)。
 
 Git 只保留程式、執行設定、依賴定義、自動測試、空輸出的 Demo Notebook、小型 CSV 範例，
 以及說明此專案的上述七份文件。Phase 研究紀錄、提案、Agent 筆記、執行報告與歷史文件快照

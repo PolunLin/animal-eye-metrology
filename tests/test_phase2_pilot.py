@@ -2,8 +2,8 @@
 
 import pytest
 
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.phase2_pilot import clip_box_roundoff, forecast, sample_ids
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.research.phase2_pilot import clip_box_roundoff, forecast, sample_ids
 
 
 def test_sampling_is_order_independent_unique_and_does_not_mutate_global_rng() -> None:

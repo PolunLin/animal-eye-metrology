@@ -11,9 +11,9 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from animal_eye_metrology import auto_eye_box as experiment
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.verification import sha256_file
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.core.verification import sha256_file
+from animal_eye_metrology.research import auto_eye_box as experiment
 
 
 def case() -> dict:

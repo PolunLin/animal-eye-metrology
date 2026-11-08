@@ -9,12 +9,12 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from animal_eye_metrology.analysis import analyze
-from animal_eye_metrology.coco import load_coco
-from animal_eye_metrology.config import load_config
-from animal_eye_metrology.errors import Phase1Error
-from animal_eye_metrology.outputs import validate_output, write_outputs
-from animal_eye_metrology.verification import verify_file
+from animal_eye_metrology.core.config import load_config
+from animal_eye_metrology.core.errors import Phase1Error
+from animal_eye_metrology.core.verification import verify_file
+from animal_eye_metrology.data.analysis import analyze
+from animal_eye_metrology.data.coco import load_coco
+from animal_eye_metrology.data.outputs import validate_output, write_outputs
 
 LOGGER = logging.getLogger("animal_eye_metrology")
 

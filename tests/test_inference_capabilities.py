@@ -2,7 +2,7 @@
 
 import pytest
 
-from animal_eye_metrology.inference_capabilities import (
+from animal_eye_metrology.inference.inference_capabilities import (
     AP10K_MAMMAL_CATEGORIES,
     COCO_ANIMAL_CATEGORIES,
     capability_policy,

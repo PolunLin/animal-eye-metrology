@@ -13,9 +13,9 @@ pytest.importorskip("PIL.Image")
 
 from test_definition_comparison import comparison_config  # noqa: E402, F401 - fixture
 
-from animal_eye_metrology import definition_comparison as comparison  # noqa: E402
-from animal_eye_metrology.results_definitions import load_definition_workspace  # noqa: E402
-from animal_eye_metrology.results_workspace import (  # noqa: E402
+from animal_eye_metrology.research import definition_comparison as comparison  # noqa: E402
+from animal_eye_metrology.ui.results_definitions import load_definition_workspace  # noqa: E402
+from animal_eye_metrology.ui.results_workspace import (  # noqa: E402
     ResultsWorkspaceError,
     load_results_bundle,
 )

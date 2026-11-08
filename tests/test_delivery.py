@@ -79,6 +79,21 @@ def test_missing_environment_example_and_broken_links_fail_independently(
     assert status(result, "recorded_csv") is True
 
 
+def test_delivery_requires_the_moved_worker_even_if_an_old_flat_path_exists(
+    shareable_copy: Path,
+) -> None:
+    relative = "src/animal_eye_metrology/inference/eye_pose_worker.py"
+    (shareable_copy / relative).unlink()
+    (shareable_copy / "src/animal_eye_metrology/eye_pose_worker.py").write_text(
+        "# SYNTHETIC stale path; not an executable model worker.\n"
+    )
+    result = delivery.check_delivery(shareable_copy)
+    assert status(result, "required_files") is False
+    assert relative in next(
+        check["detail"] for check in result["checks"] if check["name"] == "required_files"
+    )
+
+
 def test_published_guides_cannot_depend_on_a_local_research_archive(shareable_copy: Path) -> None:
     archive = shareable_copy / "docs/research_history.md"
     archive.write_text("Local history is intentionally outside the public delivery.\n")
