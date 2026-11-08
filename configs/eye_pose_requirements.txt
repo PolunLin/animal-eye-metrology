@@ -1,0 +1,13 @@
+# Independent macOS arm64 CPU environment; original .venv is not modified.
+# Build MMCV with MMCV_WITH_OPS=1 MAX_JOBS=4 and --no-build-isolation.
+torch==2.2.2
+torchvision==0.17.2
+numpy==1.26.4
+opencv-python==4.10.0.84
+scipy==1.13.1
+matplotlib==3.8.4
+mmengine==0.10.7
+mmcv==2.1.0
+mmdet==3.3.0
+mmpose @ git+https://github.com/open-mmlab/mmpose.git@5408bc76f5b848cf925a0d1857899011d8c5b497
+xtcocotools==1.14.3

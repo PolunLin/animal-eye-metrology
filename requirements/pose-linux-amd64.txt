@@ -1,0 +1,142 @@
+addict==2.4.0
+    # via
+    #   -r requirements/pose.in
+    #   mmengine
+contourpy==1.3.3
+    # via matplotlib
+cycler==0.12.1
+    # via matplotlib
+cython==3.3.1
+    # via
+    #   -r requirements/pose.in
+    #   xtcocotools
+filelock==4.2.9
+    # via torch
+fonttools==4.68.0
+    # via matplotlib
+fsspec==2026.9.0
+    # via torch
+jinja2==3.1.6
+    # via torch
+json-tricks==3.17.3
+    # via -r requirements/pose.in
+kiwisolver==1.5.1
+    # via matplotlib
+markdown-it-py==4.2.0
+    # via rich
+markupsafe==3.0.4
+    # via jinja2
+matplotlib==3.8.4
+    # via
+    #   -r requirements/pose.in
+    #   mmdet
+    #   mmengine
+    #   xtcocotools
+mdurl==0.1.2
+    # via markdown-it-py
+mmdet==3.3.0
+    # via -r requirements/pose.in
+mmengine==0.10.7
+    # via -r requirements/pose.in
+mpmath==1.3.0
+    # via sympy
+munkres==1.1.4
+    # via -r requirements/pose.in
+networkx==3.6.1
+    # via torch
+ninja==1.13.2
+    # via -r requirements/pose.in
+numpy==1.26.4
+    # via
+    #   -r requirements/pose.in
+    #   contourpy
+    #   matplotlib
+    #   mmdet
+    #   mmengine
+    #   opencv-python
+    #   pycocotools
+    #   scipy
+    #   shapely
+    #   torchvision
+    #   xtcocotools
+opencv-python==4.10.0.84
+    # via
+    #   -r requirements/pose.in
+    #   mmengine
+packaging==24.2
+    # via
+    #   -r requirements/pose.in
+    #   matplotlib
+    #   wheel
+pillow==13.0.0
+    # via
+    #   matplotlib
+    #   torchvision
+platformdirs==4.5.0
+    # via yapf
+psutil==7.2.2
+    # via -r requirements/pose.in
+pycocotools==2.0.11
+    # via mmdet
+pygments==2.21.0
+    # via rich
+pyparsing==3.3.3
+    # via matplotlib
+python-dateutil==4.0.0
+    # via matplotlib
+pyyaml==6.0.3
+    # via mmengine
+rich==15.0.0
+    # via mmengine
+scipy==1.13.1
+    # via
+    #   -r requirements/pose.in
+    #   mmdet
+setuptools==69.5.1
+    # via
+    #   -r requirements/pose.in
+    #   xtcocotools
+shapely==2.2.0
+    # via
+    #   -r requirements/pose.in
+    #   mmdet
+six==1.17.0
+    # via
+    #   -r requirements/pose.in
+    #   mmdet
+sympy==1.14.0
+    # via torch
+termcolor==3.3.0
+    # via mmengine
+terminaltables==3.1.10
+    # via
+    #   -r requirements/pose.in
+    #   mmdet
+torch==2.2.2+cpu
+    # via
+    #   -r requirements/pose-linux.in
+    #   -r requirements/pose.in
+    #   torchvision
+torchvision==0.17.2+cpu
+    # via
+    #   -r requirements/pose-linux.in
+    #   -r requirements/pose.in
+tqdm==4.70.1
+    # via mmdet
+typing-extensions==4.16.0
+    # via
+    #   -r requirements/pose.in
+    #   torch
+tzdata==2026.6
+    # via python-dateutil
+wheel==0.48.0
+    # via -r requirements/pose.in
+xtcocotools==1.14.3
+    # via -r requirements/pose.in
+yapf==0.43.0
+    # via
+    #   -r requirements/pose.in
+    #   mmengine
+
+# Explicit legacy source pin; see requirements/pose.in metadata workaround.
+chumpy==0.70

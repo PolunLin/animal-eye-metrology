@@ -1,0 +1,26 @@
+# Paths resolve relative to this file. Inference reads local files only.
+[data]
+phase1_config = "phase1.toml"
+selection_csv = "../outputs/phase1/image_selection.csv"
+feasibility_csv = "../outputs/phase1/measurement_feasibility.csv"
+expected_selected_images = 15
+
+[model]
+checkpoint = "../weights/yolo11n-seg.pt"
+source = "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.pt"
+sha256 = "55ed65c56c91713d23e8402371c6c49a6fd84f257f7dce452e8d70e41dcbe152"
+
+[inference]
+device = "cpu"
+image_size = 640
+confidence_floor = 0.001
+nms_iou = 0.7
+max_detections = 100
+diagnostic_confidence = 0.5
+diagnostic_iou = 0.5
+seed = 42
+threads = 4
+warmup_runs = 1
+
+[output]
+directory = "../outputs/phase2/yolo11n_seg_cpu"

@@ -1,0 +1,13 @@
+# Approved 2 point sources x 2 box options x 3 ROI factors; no training.
+output_directory = "../outputs/phase3/prompt_roi_ablation_v1"
+automatic_run = "../outputs/phase3/auto_eye_localization_poc_v1"
+manual_run = "../outputs/phase3/eye_segmentation_poc_v1/comparison_v1"
+primary_reference = "../outputs/phase3/manual_measurement_baseline_v1"
+sam_runtime = "eye_segmentation_poc.toml"
+primary_snapshot_sha256 = "3a3b8b98fba72ce79fd8416138ecd62c26051e528844f9d0ff70fdcacc22af13"
+manual_prompts_sha256 = "89b5b20b040e1294d067c359da5b295cfff1a1d7dcf432504f08372f61a97e85"
+image_ids = [20247, 125405, 333069]
+roi_factors = [0.5, 1.0, 1.5]
+expected_eyes = 12
+seed = 42
+threads = 4

@@ -1,0 +1,26 @@
+# Approved provisional model on the existing 15 Selected Images only.
+[data]
+phase1_config = "phase1.toml"
+selection_csv = "../outputs/phase1/image_selection.csv"
+feasibility_csv = "../outputs/phase1/measurement_feasibility.csv"
+expected_selected_images = 15
+
+[model]
+checkpoint = "../weights/yolo26s-seg.pt"
+source = "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26s-seg.pt"
+sha256 = "3da1d83e31caec96f9300eb4064f4f62882c133c7c264d63dfe61a7c197837a4"
+
+[inference]
+device = "cpu"
+image_size = 640
+confidence_floor = 0.001
+nms_iou = 0.7
+max_detections = 100
+diagnostic_confidence = 0.5
+diagnostic_iou = 0.5
+seed = 42
+threads = 4
+warmup_runs = 3
+
+[output]
+directory = "../outputs/phase2/yolo26s_seg_selected15_cpu"

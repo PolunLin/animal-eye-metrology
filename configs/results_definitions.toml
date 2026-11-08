@@ -1,0 +1,5 @@
+# Read-only v1/v2 views of unchanged model outputs. Original v1 config stays frozen.
+base_results_config = "results_workspace.toml"
+comparison_run = "../outputs/phase3/definition_comparison_v2"
+v2_reference_run = "../outputs/phase3/manual_measurement_baseline_v2"
+v2_snapshot_sha256 = "4b39bca5bb3fdfbc11432f7e7bdec20a10b58890c5ea8589254c78e69008ab0b"

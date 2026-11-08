@@ -1,0 +1,7 @@
+# Reuse every frozen selected mask. v2 reference must be independently annotated and frozen.
+results_config = "results_workspace.toml"
+v2_reference = "../outputs/phase3/manual_measurement_baseline_v2"
+output_directory = "../outputs/phase3/definition_comparison_v2"
+expected_images = 3
+expected_instances = 6
+expected_eyes = 12

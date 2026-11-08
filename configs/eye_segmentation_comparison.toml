@@ -1,0 +1,10 @@
+# Approved fixed-prompt, development-only comparison. No fitting or threshold search.
+runtime_config = "eye_segmentation_poc.toml"
+primary_reference = "../outputs/phase3/manual_measurement_baseline_v1"
+primary_snapshot_sha256 = "3a3b8b98fba72ce79fd8416138ecd62c26051e528844f9d0ff70fdcacc22af13"
+repeat_reference = "../outputs/phase3/blind_repeat_v1/measurement_baseline_v1"
+repeat_snapshot_sha256 = "a154caecdb43a9b471c2164bfceda3b71bf54950293e2dc72c418411eed42b98"
+output_directory = "../outputs/phase3/eye_segmentation_poc_v1/comparison_v1"
+expected_images = 3
+expected_instances = 6
+expected_eyes = 12

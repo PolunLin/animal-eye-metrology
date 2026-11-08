@@ -1,0 +1,13 @@
+[data]
+phase1_config = "phase1.toml"
+proposal_csv = "../outputs/phase3/eye_annotation_v2/inputs/proposed_instances.csv"
+ground_truth_directory = "../outputs/phase3/eye_annotation_v2/ground_truth"
+
+[snapshot]
+protocol_version = "eye-visible-eyelid-v2"
+expected_images = 3
+expected_instances = 6
+expected_eyes = 12
+
+[output]
+directory = "../outputs/phase3/manual_measurement_baseline_v2"

@@ -1,0 +1,368 @@
+{
+  "review_date": "2026-11-08",
+  "timezone": "Asia/Taipei",
+  "review_kind": "read_only_source_and_environment_review",
+  "scope": {
+    "model_installed": false,
+    "checkpoint_downloaded": false,
+    "model_forward_run": false,
+    "dataset_images_downloaded": false,
+    "official_documentation_figure_downloaded": true
+  },
+  "ap10k": {
+    "commit": "181b1a04755e4dc6fe5616ef7a88496f47bfe228",
+    "category_count": 54,
+    "family_count": 23,
+    "categories": [
+      {
+        "id": 1,
+        "name": "antelope",
+        "family": "Bovidae"
+      },
+      {
+        "id": 2,
+        "name": "argali sheep",
+        "family": "Bovidae"
+      },
+      {
+        "id": 3,
+        "name": "bison",
+        "family": "Bovidae"
+      },
+      {
+        "id": 4,
+        "name": "buffalo",
+        "family": "Bovidae"
+      },
+      {
+        "id": 5,
+        "name": "cow",
+        "family": "Bovidae"
+      },
+      {
+        "id": 6,
+        "name": "sheep",
+        "family": "Bovidae"
+      },
+      {
+        "id": 7,
+        "name": "arctic fox",
+        "family": "Canidae"
+      },
+      {
+        "id": 8,
+        "name": "dog",
+        "family": "Canidae"
+      },
+      {
+        "id": 9,
+        "name": "fox",
+        "family": "Canidae"
+      },
+      {
+        "id": 10,
+        "name": "wolf",
+        "family": "Canidae"
+      },
+      {
+        "id": 11,
+        "name": "beaver",
+        "family": "Castoridae"
+      },
+      {
+        "id": 12,
+        "name": "alouatta",
+        "family": "Cercopithecidae"
+      },
+      {
+        "id": 13,
+        "name": "monkey",
+        "family": "Cercopithecidae"
+      },
+      {
+        "id": 14,
+        "name": "noisy night monkey",
+        "family": "Cercopithecidae"
+      },
+      {
+        "id": 15,
+        "name": "spider monkey",
+        "family": "Cercopithecidae"
+      },
+      {
+        "id": 16,
+        "name": "uakari",
+        "family": "Cercopithecidae"
+      },
+      {
+        "id": 17,
+        "name": "deer",
+        "family": "Cervidae"
+      },
+      {
+        "id": 18,
+        "name": "moose",
+        "family": "Cervidae"
+      },
+      {
+        "id": 19,
+        "name": "hamster",
+        "family": "Cricetidae"
+      },
+      {
+        "id": 20,
+        "name": "elephant",
+        "family": "Elephantidae"
+      },
+      {
+        "id": 21,
+        "name": "horse",
+        "family": "Equidae"
+      },
+      {
+        "id": 22,
+        "name": "zebra",
+        "family": "Equidae"
+      },
+      {
+        "id": 23,
+        "name": "bobcat",
+        "family": "Felidae"
+      },
+      {
+        "id": 24,
+        "name": "cat",
+        "family": "Felidae"
+      },
+      {
+        "id": 25,
+        "name": "cheetah",
+        "family": "Felidae"
+      },
+      {
+        "id": 26,
+        "name": "jaguar",
+        "family": "Felidae"
+      },
+      {
+        "id": 27,
+        "name": "king cheetah",
+        "family": "Felidae"
+      },
+      {
+        "id": 28,
+        "name": "leopard",
+        "family": "Felidae"
+      },
+      {
+        "id": 29,
+        "name": "lion",
+        "family": "Felidae"
+      },
+      {
+        "id": 30,
+        "name": "panther",
+        "family": "Felidae"
+      },
+      {
+        "id": 31,
+        "name": "snow leopard",
+        "family": "Felidae"
+      },
+      {
+        "id": 32,
+        "name": "tiger",
+        "family": "Felidae"
+      },
+      {
+        "id": 33,
+        "name": "giraffe",
+        "family": "Giraffidae"
+      },
+      {
+        "id": 34,
+        "name": "hippo",
+        "family": "Hippopotamidae"
+      },
+      {
+        "id": 35,
+        "name": "chimpanzee",
+        "family": "Hominidae"
+      },
+      {
+        "id": 36,
+        "name": "gorilla",
+        "family": "Hominidae"
+      },
+      {
+        "id": 37,
+        "name": "orangutan",
+        "family": "Hominidae"
+      },
+      {
+        "id": 38,
+        "name": "rabbit",
+        "family": "Leporidae"
+      },
+      {
+        "id": 39,
+        "name": "skunk",
+        "family": "Mephitidae"
+      },
+      {
+        "id": 40,
+        "name": "mouse",
+        "family": "Muridae"
+      },
+      {
+        "id": 41,
+        "name": "rat",
+        "family": "Muridae"
+      },
+      {
+        "id": 42,
+        "name": "otter",
+        "family": "Mustelidae"
+      },
+      {
+        "id": 43,
+        "name": "weasel",
+        "family": "Mustelidae"
+      },
+      {
+        "id": 44,
+        "name": "raccoon",
+        "family": "Procyonidae"
+      },
+      {
+        "id": 45,
+        "name": "rhino",
+        "family": "Rhinocerotidae"
+      },
+      {
+        "id": 46,
+        "name": "marmot",
+        "family": "Sciuridae"
+      },
+      {
+        "id": 47,
+        "name": "squirrel",
+        "family": "Sciuridae"
+      },
+      {
+        "id": 48,
+        "name": "pig",
+        "family": "Suidae"
+      },
+      {
+        "id": 49,
+        "name": "mole",
+        "family": "Talpidae"
+      },
+      {
+        "id": 50,
+        "name": "black bear",
+        "family": "Ursidae"
+      },
+      {
+        "id": 51,
+        "name": "brown bear",
+        "family": "Ursidae"
+      },
+      {
+        "id": 52,
+        "name": "panda",
+        "family": "Ursidae"
+      },
+      {
+        "id": 53,
+        "name": "polar bear",
+        "family": "Ursidae"
+      },
+      {
+        "id": 54,
+        "name": "bat",
+        "family": "Vespertilionidae"
+      }
+    ],
+    "category_source": "https://github.com/AlexTheBad/AP-10K/blob/181b1a04755e4dc6fe5616ef7a88496f47bfe228/tests/data/ap10k/test_ap10k.json",
+    "keypoint_index_zero_based": {
+      "left_eye": 0,
+      "right_eye": 1,
+      "nose": 2
+    },
+    "anatomical_side_evidence": "Interpretation of the official numbered chimpanzee figure and same-side limb labels, supported by named eye channels and flip pairs; not a pupil-center specification."
+  },
+  "candidate_model": {
+    "mmpose_tag": "v1.3.2",
+    "mmpose_commit": "5408bc76f5b848cf925a0d1857899011d8c5b497",
+    "config": "configs/animal_2d_keypoint/topdown_heatmap/ap10k/td-hm_hrnet-w32_8xb64-210e_ap10k-256x256.py",
+    "checkpoint_url": "https://download.openmmlab.com/mmpose/animal/hrnet/hrnet_w32_ap10k_256x256-18aac840_20211029.pth",
+    "checkpoint_sha256": null,
+    "input_size": [
+      256,
+      256
+    ],
+    "heatmap_size": [
+      64,
+      64
+    ],
+    "output_keypoints": 17,
+    "flip_test": true,
+    "bbox_padding": 1.25
+  },
+  "local_environment": {
+    "python": "3.11.14",
+    "platform": "macOS-26.5.1-arm64-arm-64bit",
+    "machine": "arm64",
+    "torch": "2.9.1",
+    "torchvision": "0.24.1",
+    "numpy": "2.4.6",
+    "opencv_python": "5.0.0.93",
+    "scipy": "1.17.1",
+    "mmpose": null,
+    "mmcv": null,
+    "mmcv_lite": null,
+    "mmengine": null,
+    "mmdet": null,
+    "xtcocotools": null,
+    "cuda_available": false,
+    "mps_built": true,
+    "mps_available": false,
+    "cpu_tensor_smoke_result": [
+      2,
+      4
+    ],
+    "clang_path": "/usr/bin/clang",
+    "command_line_tools": "/Library/Developer/CommandLineTools"
+  },
+  "existing_detections": {
+    "source": "outputs/phase2/yolo26s_seg_selected15_cpu/prediction_instances.json",
+    "image_ids": [
+      20247,
+      125405,
+      333069
+    ],
+    "score_threshold": 0.5,
+    "selected_count": 6,
+    "counts_by_image": {
+      "20247": 2,
+      "125405": 2,
+      "333069": 2
+    },
+    "status": "Read existing outputs; no new detector inference."
+  },
+  "pypi_release_files": {
+    "mmpose_1_3_2": "Universal Python wheel available.",
+    "mmengine_0_10_7": "Universal Python wheel available.",
+    "mmcv_2_2_0": "Inspected PyPI release contains only mmcv-2.2.0.tar.gz; other indexes not exhaustively audited.",
+    "mmcv_lite_2_2_0": "Universal Python wheel available; does not satisfy eager mmcv.ops import path in stock MMPose registration.",
+    "xtcocotools_1_14_3": "xtcocotools-1.14.3-cp311-cp311-macosx_10_9_universal2.whl exists; import and NumPy ABI untested."
+  },
+  "compatibility_conclusion": "CPU is a supported upstream route, but this exact dependency stack and HRNet checkpoint have not been installed or run; isolated compatibility validation is required.",
+  "documentation_figure": {
+    "url": "https://raw.githubusercontent.com/AlexTheBad/AP-10K/181b1a04755e4dc6fe5616ef7a88496f47bfe228/images/keypointDef.jpg",
+    "sha256": "851853fb20680df841cce43d10a9deffe7feac6d809d12112c257b47d170f869",
+    "visually_inspected": true
+  }
+}
