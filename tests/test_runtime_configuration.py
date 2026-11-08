@@ -2,7 +2,6 @@
 
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
 
 import pytest
@@ -34,7 +33,7 @@ POLICY_FIELDS = (
 
 @pytest.mark.parametrize("name", ["inference.runtime.toml", "inference.docker.toml"])
 def test_clean_runtime_preserves_model_hashes_and_approved_execution_policy(name: str) -> None:
-    original = load_config(CONFIGS / "inference.toml")
+    original = load_config(CONFIGS / "inference.runtime.toml")
     clean = load_config(CONFIGS / name)
     assert {key: clean[key] for key in POLICY_FIELDS} == {
         key: original[key] for key in POLICY_FIELDS
@@ -52,13 +51,17 @@ def test_clean_runtime_preserves_model_hashes_and_approved_execution_policy(name
     )
 
 
-def test_clean_runtime_sam_uses_the_same_predictor_commit_and_checkpoint_as_research() -> None:
-    with (CONFIGS / "eye_segmentation_poc.toml").open("rb") as handle:
-        research = tomllib.load(handle)
+def test_sam_runtime_pins_one_model_and_its_execution_policy() -> None:
     clean = settings(CONFIGS / "sam2_runtime.toml")
-    assert clean["models"] == {"sam2_1_tiny": research["models"]["sam2_1_tiny"]}
+    assert clean["models"] == {
+        "sam2_1_tiny": {
+            "checkpoint": "sam2.1_hiera_tiny.pt",
+            "distribution": "SAM-2",
+            "commit": "2b90b9f5ceec907a1c18123530e92e794ad901a4",
+        }
+    }
     assert (clean["device"], clean["threads"], clean["seed"]) == ("cpu", 4, 42)
-    assert clean["weights_directory"] == (ROOT / "weights/eye_poc").resolve()
+    assert clean["weights_directory"] == ROOT / "weights/eye_poc"
 
 
 def test_local_and_container_paths_keep_both_python_environments_separate() -> None:

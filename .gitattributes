@@ -1,0 +1,2 @@
+# Preserve recorded CSV bytes and SHA-256 across Git checkout platforms.
+examples/*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

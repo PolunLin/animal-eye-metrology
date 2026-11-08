@@ -19,17 +19,15 @@ SPEC.loader.exec_module(delivery)
 @pytest.fixture
 def shareable_copy(tmp_path: Path) -> Path:
     # Copy shareable source directories so new README links to code or demo
-    # notebooks work, while datasets, weights, outputs and venvs stay excluded.
+    # links work, while datasets, weights, outputs and venvs stay excluded.
     for directory in (
         ".github",
         "app",
         "configs",
         "examples",
-        "notebooks",
         "requirements",
         "scripts",
         "src",
-        "templates",
         "tests",
     ):
         source = ROOT / directory
@@ -54,7 +52,7 @@ def update_sample_digest(root: Path) -> None:
     """Keep bytes/provenance consistent to independently exercise the geometry check."""
     path = root / "examples/README.md"
     digest = hashlib.sha256((root / "examples/measurements.csv").read_bytes()).hexdigest()
-    text = re.sub(r"(CSV SHA-256\s*\|\s*`)[0-9a-f]{64}", r"\g<1>" + digest, path.read_text())
+    text = re.sub(r"(\|\s*CSV SHA-256\s*\|\s*`)[0-9a-f]{64}", r"\g<1>" + digest, path.read_text())
     path.write_text(text)
 
 
@@ -97,7 +95,7 @@ def test_delivery_requires_the_moved_worker_even_if_an_old_flat_path_exists(
 def test_published_guides_cannot_depend_on_a_local_research_archive(shareable_copy: Path) -> None:
     archive = shareable_copy / "docs/research_history.md"
     archive.write_text("Local history is intentionally outside the public delivery.\n")
-    with (shareable_copy / "docs/setup.md").open("a") as handle:
+    with (shareable_copy / "docs/methodology.md").open("a") as handle:
         handle.write("\n[Local history](research_history.md)\n")
     result = delivery.check_delivery(shareable_copy)
     assert status(result, "documentation_local_links") is False

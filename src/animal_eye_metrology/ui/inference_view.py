@@ -522,7 +522,7 @@ def inference_workspace(root: Path) -> None:
         "本版可對 COCO 全部 10 類動物執行眼部流程："
         + "、".join(CATEGORIES[category] for category in COCO_ANIMAL_CATEGORIES)
         + "，採 CPU 執行。"
-        "不需人工點框或 GT；既有 v1／v2 標註比較請到 Results Explorer。"
+        "使用固定模型與 ROI，輸出動物輪廓、眼部遮罩及兩種像素距離。"
     )
     st.caption(
         "鳥類使用 AP-10K 訓練範圍外的試驗推論；其餘九類有資料集物種對應，"
@@ -561,9 +561,7 @@ def inference_workspace(root: Path) -> None:
         f"檔案上限 {config.get('max_upload_bytes', 20 * 1024 * 1024) / (1024 * 1024):g} MiB；"
         f"像素上限 {config.get('max_image_pixels', 12000000):,}。"
     )
-    compare = st.checkbox("同時執行 A_r050 對照（保留 A_r100 基線）", key="inference_compare")
-    conditions = (BASELINE, "A_r050") if compare else (BASELINE,)
-    st.caption("A_r100：原始 1× ROI；A_r050：0.5× ROI 對照。每次使用新的執行目錄。")
+    conditions = (BASELINE,)
     data = uploaded.getvalue() if uploaded is not None else None
     signature = request_signature(data, conditions, config_path) if data is not None else None
     if st.button(
@@ -601,7 +599,7 @@ def inference_workspace(root: Path) -> None:
             st.error(f"無法完成這次推論：{exc}")
     previous = st.session_state.get("inference_last_result")
     if previous and previous["signature"] != signature:
-        st.info("圖片、ROI 選項或設定已改變；請重新執行。上一筆結果仍保存在原執行目錄。")
+        st.info("圖片或設定已改變；請重新執行。上一筆結果仍保存在原執行目錄。")
     elif previous:
         try:
             directory = Path(previous["directory"])

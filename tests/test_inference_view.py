@@ -164,7 +164,7 @@ def table(app: AppTest, column: str):
 def test_upload_run_retains_baseline_and_does_not_rerun_on_display(workspace):
     app = workspace["app"].run()
     assert not app.exception
-    assert not app.checkbox(key="inference_compare").value
+    assert not any(item.key == "inference_compare" for item in app.checkbox)
     app.button(key="inference_run").click().run()
     assert not app.exception
     assert not app.error
@@ -174,19 +174,6 @@ def test_upload_run_retains_baseline_and_does_not_rerun_on_display(workspace):
     assert len(workspace["calls"]) == 1
     assert any("候選量測" in item.value for item in app.warning)
     assert not any("IoU" in str(item.value.columns) for item in app.dataframe)
-
-
-def test_changed_roi_hides_old_result_until_explicit_run(workspace):
-    app = workspace["app"].run()
-    app.button(key="inference_run").click().run()
-    app.checkbox(key="inference_compare").check().run()
-    assert not app.exception
-    assert len(workspace["calls"]) == 1
-    assert any("請重新執行" in item.value for item in app.info)
-    assert not any("本次推論結果" == item.value for item in app.subheader)
-    app.button(key="inference_run").click().run()
-    assert not app.exception
-    assert workspace["calls"][-1]["conditions"] == ("A_r100", "A_r050")
 
 
 def test_changed_image_hides_old_result(workspace, monkeypatch):

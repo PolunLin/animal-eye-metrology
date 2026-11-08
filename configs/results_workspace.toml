@@ -1,6 +1,0 @@
-# Read-only display of frozen development experiments. Paths are config-relative.
-automatic_run = "../outputs/phase3/auto_eye_localization_poc_v1"
-ablation_run = "../outputs/phase3/prompt_roi_ablation_v1"
-auto_box_run = "../outputs/phase3/auto_eye_box_poc_v1"
-reference_run = "../outputs/phase3/manual_measurement_baseline_v1"
-primary_snapshot_sha256 = "3a3b8b98fba72ce79fd8416138ecd62c26051e528844f9d0ff70fdcacc22af13"

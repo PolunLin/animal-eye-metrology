@@ -7,7 +7,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Annotated, Any
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -114,9 +114,6 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     )
     def predict(
         file: Annotated[UploadFile, File(description="One actual JPEG or PNG image.")],
-        compare_r050: Annotated[
-            bool, Form(description="Also run the existing A_r050 ROI comparison.")
-        ] = False,
     ) -> dict[str, Any]:
         """Run the existing pipeline synchronously; inspect result.status for model failures."""
         cfg = config()
@@ -140,9 +137,8 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                 raise HTTPException(
                     503, {"message": "Local dependencies are not ready.", "checks": checks}
                 )
-            conditions = ("A_r100", "A_r050") if compare_r050 else ("A_r100",)
             directory = app.state.runner(
-                data, file.filename or "upload", app.state.config_path, conditions
+                data, file.filename or "upload", app.state.config_path, ("A_r100",)
             )
             return result_in(directory)
         except InferenceBusyError as error:

@@ -1,4 +1,4 @@
-# Current application only; research three-model comparison configuration is preserved.
+# Fixed SAM 2.1 Tiny runtime for the final pipeline.
 runtime_kind = "application"
 weights_directory = "../weights/eye_poc"
 device = "cpu"

@@ -12,7 +12,7 @@ from PIL import Image
 from animal_eye_metrology import api
 
 RUN_ID = "20261108T010203Z_012345abcdef"
-CONFIG = Path(__file__).resolve().parents[1] / "configs/inference.toml"
+CONFIG = Path(__file__).resolve().parents[1] / "configs/inference.runtime.toml"
 
 
 @pytest.fixture
@@ -74,14 +74,12 @@ def test_health_and_openapi_do_not_run_models(api_client) -> None:
 
 def test_predict_download_and_read_preserve_candidate_semantics(api_client) -> None:
     _, client, cfg = api_client
-    response = client.post(
-        "/predict", files={"file": ("test.png", png(), "image/png")}, data={"compare_r050": "true"}
-    )
+    response = client.post("/predict", files={"file": ("test.png", png(), "image/png")})
     assert response.status_code == 200
     result = response.json()
-    assert result["conditions"] == ["A_r100", "A_r050"]
+    assert result["conditions"] == ["A_r100"]
     assert result["measurements"][0]["qualification"] == "unverified"
-    assert cfg["test_calls"][0][3] == ("A_r100", "A_r050")
+    assert cfg["test_calls"][0][3] == ("A_r100",)
     assert client.get(f"/runs/{RUN_ID}").json() == result
     artifact = client.get(f"/runs/{RUN_ID}/artifacts/measurements_csv")
     assert artifact.status_code == 200

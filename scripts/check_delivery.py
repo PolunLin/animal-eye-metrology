@@ -13,15 +13,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
-PUBLIC_DOCUMENTS = (
-    "docs/index.md",
-    "docs/setup.md",
-    "docs/docker.md",
-    "docs/api.md",
-    "docs/architecture.md",
-    "docs/methodology.md",
-    "docs/notebook_demo.md",
-)
+PUBLIC_DOCUMENTS = ("docs/api.md", "docs/architecture.md", "docs/methodology.md")
 
 REQUIRED_FILES = (
     "README.md",
@@ -30,50 +22,56 @@ REQUIRED_FILES = (
     "uv.lock",
     ".env.example",
     ".dockerignore",
+    ".gitignore",
     "Dockerfile",
     "compose.yaml",
     ".github/workflows/ci.yml",
-    "configs/inference.runtime.toml",
-    "configs/inference.docker.toml",
-    "configs/sam2_runtime.toml",
     "configs/eye_pose_source_manifest.json",
-    "configs/segmentation_training_pilot.toml",
+    "configs/inference.docker.toml",
+    "configs/inference.runtime.toml",
+    "configs/sam2_runtime.toml",
     "requirements/app-linux-amd64.txt",
+    "requirements/app-linux.in",
     "requirements/app-macos-arm64.txt",
+    "requirements/app.in",
     "requirements/pose-linux-amd64.txt",
+    "requirements/pose-linux.in",
     "requirements/pose-macos-arm64.txt",
+    "requirements/pose.in",
     "scripts/bootstrap.py",
-    "scripts/prepare_models.py",
+    "scripts/check_delivery.py",
     "scripts/check_runtime.py",
+    "scripts/prepare_models.py",
     "scripts/smoke_api.py",
-    "scripts/export_training_weights.py",
     "src/animal_eye_metrology/__init__.py",
     "src/animal_eye_metrology/__main__.py",
     "src/animal_eye_metrology/api.py",
     "src/animal_eye_metrology/cli.py",
-    "src/animal_eye_metrology/paths.py",
     "src/animal_eye_metrology/core/__init__.py",
-    "src/animal_eye_metrology/data/__init__.py",
-    "src/animal_eye_metrology/annotation/__init__.py",
-    "src/animal_eye_metrology/models/__init__.py",
+    "src/animal_eye_metrology/core/errors.py",
+    "src/animal_eye_metrology/core/execution_lock.py",
+    "src/animal_eye_metrology/core/verification.py",
     "src/animal_eye_metrology/inference/__init__.py",
-    "src/animal_eye_metrology/measurement/__init__.py",
-    "src/animal_eye_metrology/research/__init__.py",
-    "src/animal_eye_metrology/ui/__init__.py",
-    "src/animal_eye_metrology/inference/inference_pipeline.py",
     "src/animal_eye_metrology/inference/eye_pose_worker.py",
+    "src/animal_eye_metrology/inference/inference_artifacts.py",
+    "src/animal_eye_metrology/inference/inference_capabilities.py",
+    "src/animal_eye_metrology/inference/inference_pipeline.py",
+    "src/animal_eye_metrology/inference/inference_worker.py",
+    "src/animal_eye_metrology/measurement/__init__.py",
+    "src/animal_eye_metrology/measurement/eye_geometry.py",
+    "src/animal_eye_metrology/measurement/metrology.py",
+    "src/animal_eye_metrology/models/__init__.py",
     "src/animal_eye_metrology/models/sam_runtime.py",
-    "src/animal_eye_metrology/models/training_yolo.py",
-    "src/animal_eye_metrology/data/training_data.py",
-    "src/animal_eye_metrology/data/segmentation_supply.py",
-    "src/animal_eye_metrology/research/training.py",
+    "src/animal_eye_metrology/paths.py",
+    "src/animal_eye_metrology/ui/__init__.py",
+    "src/animal_eye_metrology/ui/inference_view.py",
     "app/streamlit_app.py",
-    "app/assets/eye_canvas.js",
-    "app/assets/eye_prompt_canvas.js",
-    *PUBLIC_DOCUMENTS,
-    "examples/measurements.csv",
-    "examples/input_manifest.csv",
     "examples/README.md",
+    "examples/input_manifest.csv",
+    "examples/measurements.csv",
+    "docs/api.md",
+    "docs/architecture.md",
+    "docs/methodology.md",
 )
 
 
@@ -92,7 +90,9 @@ def check_documentation_links(root: Path) -> None:
                 broken.append(f"{relative}: {target}")
                 continue
             project_path = path.relative_to(root).as_posix()
-            if project_path.startswith("docs/") and project_path not in PUBLIC_DOCUMENTS:
+            if project_path.startswith("local_only/") or (
+                project_path.startswith("docs/") and project_path not in PUBLIC_DOCUMENTS
+            ):
                 broken.append(f"{relative}: {target} (local research archive)")
     if broken:
         raise ValueError(f"Unpublished, missing or out-of-repository documentation links: {broken}")
@@ -102,7 +102,7 @@ def check_recorded_csv(root: Path) -> None:
     """Validate the recorded bytes and distance arithmetic, never model accuracy."""
     sample = root / "examples/measurements.csv"
     provenance = (root / "examples/README.md").read_text(encoding="utf-8")
-    match = re.search(r"CSV SHA-256\s*\|\s*`([0-9a-f]{64})`", provenance)
+    match = re.search(r"\|\s*CSV SHA-256\s*\|\s*`([0-9a-f]{64})`", provenance)
     if match is None or hashlib.sha256(sample.read_bytes()).hexdigest() != match[1]:
         raise ValueError("Recorded CSV SHA-256 does not match its provenance document.")
     with sample.open(encoding="utf-8-sig", newline="") as handle:

@@ -27,16 +27,13 @@ def request(
         return error.code, error.read()
 
 
-def upload(base: str, image: bytes, name: str, *, compare: bool = False) -> tuple[int, bytes]:
+def upload(base: str, image: bytes, name: str) -> tuple[int, bytes]:
     boundary = "aem_" + uuid.uuid4().hex
     body = (
         f'--{boundary}\r\nContent-Disposition: form-data; name="file"; '
         f'filename="{name}"\r\nContent-Type: application/octet-stream\r\n\r\n'
     ).encode() + image
-    body += (
-        f'\r\n--{boundary}\r\nContent-Disposition: form-data; name="compare_r050"\r\n\r\n'
-        f"{'true' if compare else 'false'}\r\n--{boundary}--\r\n"
-    ).encode()
+    body += f"\r\n--{boundary}--\r\n".encode()
     return request(base + "/predict", body, f"multipart/form-data; boundary={boundary}")
 
 
@@ -48,10 +45,10 @@ def smoke(base: str, image: Path) -> dict[str, Any]:
     assert status == 200 and "/predict" in json.loads(raw)["paths"]
     assert upload(base, b"invalid synthetic content", "invalid.png")[0] == 400
     image_bytes = image.read_bytes()
-    status, raw = upload(base, image_bytes, image.name, compare=True)
+    status, raw = upload(base, image_bytes, image.name)
     result = json.loads(raw)
     assert status == 200 and result["status"] in {"completed", "completed_with_issues"}, result
-    assert result["conditions"] == ["A_r100", "A_r050"]
+    assert result["conditions"] == ["A_r100"]
     assert result["input"]["original_sha256"] == hashlib.sha256(image_bytes).hexdigest()
     assert sum(animal["accepted"] for animal in result["animals"]) >= 2
     assert any(

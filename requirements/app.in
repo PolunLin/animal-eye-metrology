@@ -1,4 +1,4 @@
-# Application runtime; historical research extras in pyproject.toml remain unchanged.
+# Final application runtime; model sources are pinned by bootstrap.
 torch==2.9.1
 torchvision==0.24.1
 ultralytics==8.4.0
