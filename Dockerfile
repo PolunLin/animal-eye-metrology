@@ -18,7 +18,6 @@ FROM ${PYTHON_IMAGE} AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     PATH="/opt/venvs/app/bin:$PATH" \
     AEM_INFERENCE_CONFIG=/app/configs/inference.docker.toml \
-    AEM_WORKSPACE="New Image Inference" \
     OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 YOLO_OFFLINE=true YOLO_AUTOINSTALL=false
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 libglib2.0-0 libgomp1 && rm -rf /var/lib/apt/lists/*
@@ -31,9 +30,7 @@ COPY configs/ configs/
 COPY scripts/ scripts/
 COPY docs/ docs/
 COPY examples/ examples/
-COPY notebooks/ notebooks/
 COPY tests/ tests/
-COPY templates/ templates/
 COPY requirements/ requirements/
 COPY .env.example Dockerfile compose.yaml .dockerignore ./
 COPY .github/ .github/

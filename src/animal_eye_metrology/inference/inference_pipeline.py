@@ -276,7 +276,7 @@ def _apply_pose(
                 "image_width": width,
                 "image_height": height,
             },
-            1.0 if eye["condition_id"] == "A_r100" else 0.5,
+            1.0,
         )
         eye.update(
             localization_status="completed",
@@ -371,8 +371,8 @@ def _run_inference(
 ) -> Path:
     """Run once, write unique artifacts, and retain all failure slots. No reference inputs."""
     cfg = load_config(config_path)
-    if conditions not in (("A_r100",), ("A_r100", "A_r050")):
-        raise ValueError("A_r100 is mandatory; only the existing A_r050 comparison is supported.")
+    if conditions != ("A_r100",):
+        raise ValueError("The delivery uses the fixed A_r100 baseline.")
     image, suffix = normalize_image(image_bytes, cfg)
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid.uuid4().hex[:12]
     run_dir = cfg["output_directory"] / run_id
@@ -665,7 +665,6 @@ def main() -> None:
         ),
     )
     parser.add_argument("--image", type=Path)
-    parser.add_argument("--compare-r050", action="store_true")
     parser.add_argument("--preflight", action="store_true")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -679,7 +678,7 @@ def main() -> None:
         args.image.read_bytes(),
         args.image.name,
         args.config,
-        ("A_r100", "A_r050") if args.compare_r050 else ("A_r100",),
+        ("A_r100",),
     )
     print(output)
     raise SystemExit(1 if load_result(output)["status"] == "failed" else 0)

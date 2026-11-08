@@ -40,48 +40,25 @@ def test_root_import_does_not_load_application_or_model_dependencies(tmp_path: P
     assert json.loads(process.stdout) == []
 
 
-def test_legacy_imports_share_canonical_modules_and_preserve_their_specs() -> None:
+def test_published_modules_resolve_without_legacy_or_private_packages() -> None:
     for name, location in MODULE_LOCATIONS.items():
-        if name == "training_yolo":
-            # The optional Torch/OpenCV adapter has its own identity test in test_training_yolo.
-            continue
-        canonical_name = "animal_eye_metrology." + location.removesuffix(".py").replace("/", ".")
-        legacy = importlib.import_module(f"animal_eye_metrology.{name}")
-        canonical = importlib.import_module(canonical_name)
-        assert legacy is canonical
-        assert canonical.__spec__.name == canonical_name
+        canonical = importlib.import_module(
+            "animal_eye_metrology." + location.removesuffix(".py").replace("/", ".")
+        )
         assert Path(canonical.__file__).resolve() == module_source(name)
-        assert not (PACKAGE_ROOT / f"{name}.py").exists()
-
-
-def test_legacy_exceptions_and_monkeypatches_reach_the_same_module(monkeypatch) -> None:
-    old_errors = importlib.import_module("animal_eye_metrology.errors")
-    new_errors = importlib.import_module("animal_eye_metrology.core.errors")
-    assert old_errors.Phase1Error is new_errors.Phase1Error
-    old_pipeline = importlib.import_module("animal_eye_metrology.inference_pipeline")
-    new_pipeline = importlib.import_module("animal_eye_metrology.inference.inference_pipeline")
-    marker = object()
-    monkeypatch.setattr(old_pipeline, "ROOT", marker)
-    assert new_pipeline.ROOT is marker
+    assert not (PACKAGE_ROOT / "research").joinpath("__init__.py").exists()
+    assert not (PACKAGE_ROOT / "_compat.py").exists()
 
 
 @pytest.mark.parametrize(
     "module",
     [
         "animal_eye_metrology",
-        "animal_eye_metrology.measurement_baseline",
-        "animal_eye_metrology.measurement.measurement_baseline",
-        "animal_eye_metrology.auto_eye_localization",
-        "animal_eye_metrology.research.auto_eye_localization",
-        "animal_eye_metrology.inference_worker",
         "animal_eye_metrology.inference.inference_worker",
-        "animal_eye_metrology.eye_pose_worker",
         "animal_eye_metrology.inference.eye_pose_worker",
     ],
 )
-def test_new_and_historical_commands_work_from_an_unrelated_directory(
-    module: str, tmp_path: Path
-) -> None:
+def test_delivery_commands_work_from_an_unrelated_directory(module: str, tmp_path: Path) -> None:
     process = subprocess.run(
         [sys.executable, "-m", module, "--help"],
         cwd=tmp_path,

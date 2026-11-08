@@ -1,4 +1,5 @@
 .git
+local_only
 .venv*
 .runtime
 .env
@@ -23,13 +24,9 @@ __pycache__
 
 # Match the public documentation boundary used by Git.
 docs/*
-!docs/index.md
-!docs/setup.md
-!docs/docker.md
 !docs/api.md
 !docs/architecture.md
 !docs/methodology.md
-!docs/notebook_demo.md
 AGENTS.md
 **/AGENTS.md
 AGENT.md

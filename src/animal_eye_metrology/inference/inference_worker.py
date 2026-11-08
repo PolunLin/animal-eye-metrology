@@ -264,8 +264,8 @@ def segment_case(
             raise Phase1Error("Invalid prediction identifier.")
         if case["eye_side"] not in ("left", "right"):
             raise Phase1Error("Invalid anatomical eye side.")
-        if case["condition_id"] not in ("A_r100", "A_r050"):
-            raise Phase1Error("Only A_r100 and the A_r050 comparison are supported.")
+        if case["condition_id"] != "A_r100":
+            raise Phase1Error("Only the fixed A_r100 baseline is supported.")
         roi = case["roi_xyxy"]
         if len(roi) != 4 or any(type(value) is not int for value in roi):
             raise Phase1Error("ROI must contain four integer pixel edges.")

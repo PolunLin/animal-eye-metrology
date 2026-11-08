@@ -1,9 +1,0 @@
-# Independent, owner-approved v2 relabeling. All paths are config-relative.
-phase1_config = "phase1.toml"
-proposal_csv = "../outputs/phase3/phase3a/proposed_instances.csv"
-directory = "../outputs/phase3/eye_annotation_v2"
-protocol_document = "../docs/eye_annotation_protocol_v2.md"
-protocol_version = "eye-visible-eyelid-v2"
-expected_images = 3
-expected_instances = 6
-expected_eyes = 12

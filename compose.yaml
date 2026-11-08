@@ -6,7 +6,6 @@ x-runtime: &runtime
     context: .
   environment:
     AEM_INFERENCE_CONFIG: /app/configs/inference.docker.toml
-    AEM_WORKSPACE: ${AEM_WORKSPACE:-New Image Inference}
   volumes:
     - ${WEIGHTS_DIRECTORY:-./weights}:/app/weights:ro
     - ${DATA_DIRECTORY:-./data}:/app/data:ro

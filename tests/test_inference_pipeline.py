@@ -17,7 +17,7 @@ from animal_eye_metrology.inference.inference_capabilities import (
     category_capability,
 )
 
-CONFIG = Path(__file__).resolve().parents[1] / "configs/inference.toml"
+CONFIG = Path(__file__).resolve().parents[1] / "configs/inference.runtime.toml"
 
 
 def image_bytes(image: Image.Image, fmt: str = "PNG", **kwargs: Any) -> bytes:
@@ -54,8 +54,8 @@ def pose(identifier: str, **updates: Any) -> dict:
 
 def test_config_preserves_isolated_python_symlinks_and_baseline_scope() -> None:
     config = pipeline.load_config(CONFIG)
-    assert config["pose_python"].parts[-3:] == (".venv-eye-pose", "bin", "python")
-    assert config["python"].parts[-3:] == (".venv", "bin", "python")
+    assert config["pose_python"].parts[-4:] == (".runtime", "pose", "bin", "python")
+    assert config["python"].parts[-4:] == (".runtime", "app", "bin", "python")
     assert config["supported_categories"] == list(COCO_ANIMAL_CATEGORIES)
     assert config["animal_score_threshold"] == 0.5
 
@@ -152,21 +152,21 @@ def test_invalid_upload_has_no_image_resize_or_format_fallback(problem: str) -> 
         pipeline.normalize_image(data, cfg)
 
 
-def test_pose_preserves_named_sides_and_scales_entire_roi_rule() -> None:
-    eyes = pipeline._eye_slots([animal("animal_0001")], ("A_r100", "A_r050"))
+def test_pose_preserves_named_sides_and_baseline_roi_rule() -> None:
+    eyes = pipeline._eye_slots([animal("animal_0001")], ("A_r100",))
     cases = pipeline._apply_pose(eyes, [pose("animal_0001")], 100, 100)
-    assert len(cases) == 4
+    assert len(cases) == 2
     assert cases[0]["eye_side"] == "left" and cases[0]["point_xy"] == [40, 40]
     assert cases[1]["eye_side"] == "right" and cases[1]["point_xy"] == [30, 40]
     assert cases[0]["roi_xyxy"] == [24, 24, 56, 56]
-    assert cases[2]["roi_xyxy"] == [32, 32, 48, 48]
+    assert cases[1]["roi_xyxy"] == [14, 24, 46, 56]
     assert {eye["visibility_status"] for eye in eyes} == {"unverified"}
     assert {eye["side_assignment_status"] for eye in eyes} == {"unverified"}
 
 
 @pytest.mark.parametrize("outputs", [[], [pose("animal_0001", scores=[0.8, 0])]])
 def test_missing_pose_or_one_invalid_eye_blocks_both_sam_slots(outputs: list) -> None:
-    eyes = pipeline._eye_slots([animal("animal_0001")], ("A_r100", "A_r050"))
+    eyes = pipeline._eye_slots([animal("animal_0001"), animal("animal_0002")], ("A_r100",))
     assert pipeline._apply_pose(eyes, outputs, 100, 100) == []
     assert len(eyes) == 4
     assert {eye["localization_status"] for eye in eyes} == {"failed"}
@@ -188,8 +188,8 @@ def test_unsupported_keeps_eye_slots_while_below_threshold_never_enters_pose() -
 def test_saved_masks_have_original_grid_centroids_and_missing_output_stays_null(
     tmp_path: Path,
 ) -> None:
-    eyes = pipeline._eye_slots([animal("animal_0001")], ("A_r100", "A_r050"))
-    pipeline._apply_pose(eyes, [pose("animal_0001")], 100, 100)
+    eyes = pipeline._eye_slots([animal("animal_0001"), animal("animal_0002")], ("A_r100",))
+    pipeline._apply_pose(eyes, [pose("animal_0001"), pose("animal_0002")], 100, 100)
     mask = np.zeros((100, 100), dtype=np.uint8)
     mask[41, 42] = 255
     Image.fromarray(mask).save(tmp_path / "mask.png")

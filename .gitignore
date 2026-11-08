@@ -30,6 +30,7 @@ coverage.xml
 .ipynb_checkpoints/
 
 # Local assets and generated experiments; retain source code and small examples
+/local_only/
 /data/
 /datasets/
 /coco/
@@ -106,10 +107,6 @@ phase*.md
 # Publish only documents that explain the delivered project.
 # Research protocols, phase reports and execution records remain local.
 /docs/*
-!/docs/index.md
-!/docs/setup.md
-!/docs/docker.md
 !/docs/api.md
 !/docs/architecture.md
 !/docs/methodology.md
-!/docs/notebook_demo.md
