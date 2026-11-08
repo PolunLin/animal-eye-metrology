@@ -50,6 +50,10 @@ MODULE_LOCATIONS: dict[str, str] = {
     "review_store": "annotation/review_store.py",
     "sam_runtime": "models/sam_runtime.py",
     "segmentation": "models/segmentation.py",
+    "segmentation_supply": "data/segmentation_supply.py",
+    "training": "research/training.py",
+    "training_data": "data/training_data.py",
+    "training_yolo": "models/training_yolo.py",
     "verification": "core/verification.py",
     "visualization": "ui/visualization.py",
 }
