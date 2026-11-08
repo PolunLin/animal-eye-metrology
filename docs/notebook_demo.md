@@ -90,38 +90,23 @@ mkdir -p outputs/notebook_demo
 
 舊 CSV 可能沒有新版域外欄位，應保留原 schema，不將欄位缺失解讀為已通過驗證。
 流程 `completed`、有限距離或非空遮罩均不能代替準確度評估。
-模型與產物說明見 [New Image Inference](new_image_inference.md)；新的資料選擇、
-GT、評估或量測方法仍須另行提案並經專案負責人確認。
+模型與產物責任見 [Architecture](architecture.md)，公式、人工參考與評估規則見
+[Methodology](methodology.md)。新的資料選擇、GT、評估或量測方法仍須經專案負責人確認。
 
-## Local Validation — 2026-11-08
+## Checks
 
-以下是本次本機觀察，不代表新環境安裝驗收或模型準確度評估。
-使用 Python 3.11.14、JupyterLab 4.6.6 與獨立 Notebook 環境，以真正的 Jupyter kernel 執行。
+`preflight()` 檢查檔案與權重雜湊，不保證子程序套件能匯入；使用 `live` 前先完成
+[模型載入檢查](setup.md#fresh-runtime)。Notebook 不會自行切換環境，也不以重播結果取代失敗推論。
 
-| 檢查 | 結果 |
-| --- | --- |
-| Notebook 格式／語法 | 通過；19 個儲存格，提交版本沒有執行輸出 |
-| `replay` | 指定原 run 完整執行；6 筆既有距離、13 張展示影像；公式、遮罩重心與 manifest 雜湊一致 |
-| `csv` | 從 `notebooks/` 執行通過；6 筆既有距離與固定 CSV 雜湊一致 |
-| 缺 run 退回 | 明確顯示退回 CSV，執行通過；沒有模型或圖像輸出 |
-| `live`：`configs/inference.toml` | 既有本機環境完成完整流程；run `20261108T094616Z_c8d8b2cc0d45`，3 筆候選距離、12 張展示影像，幾何與產物雜湊一致 |
-| `live`：`configs/inference.runtime.toml` | 本次動物分割完成，但新 pose 環境缺少 `mmpose`，眼點定位失敗；run `20261108T094302Z_30edae7d8e34` 保留失敗狀態與空距離，未當作成功 |
-| 原產物保護 | 重播 run 的檔案雜湊在測試前後相同，Notebook 原檔仍為空輸出 |
-| 套件相容性 | 獨立 Notebook 環境的 94 個套件通過 `uv pip check` |
-| 相關自動測試 | 59 passed；只驗證幾何與流程行為，不評估模型準確度 |
-| Ruff／交付檢查 | Notebook lint、格式與 `check_delivery.py` 通過 |
-
-`preflight()` 檢查檔案及權重雜湊，不保證子程序套件能匯入；新 pose 環境需完成原有安裝流程。
-本機現場 Demo 可明確選擇已驗證的歷史設定，啟動命令見上文，Notebook 不會自行切換環境。
-執行後的 Notebook 保存在 `outputs/notebook_demo/demo.{replay,csv,fallback,live}.executed.ipynb`；
-完整現場結果保存在對應 `outputs/inference/<run_id>/`，均未納入 Git。
-
-相關檢查命令：
+以下檢查幾何／保存契約、Notebook 格式與依賴，不評估模型準確率：
 
 ```sh
-.venv/bin/python -m pytest -q tests/test_metrology.py tests/test_inference_artifacts.py tests/test_inference_pipeline.py
-.venv/bin/ruff check notebooks/demo.ipynb
-.venv/bin/ruff format --check notebooks/demo.ipynb
-.venv/bin/python scripts/check_delivery.py
-uv pip check --offline --cache-dir .runtime/cache/uv-notebook --python .runtime/notebook/bin/python
+.runtime/app/bin/python -m pytest -q tests/test_metrology.py tests/test_inference_artifacts.py tests/test_inference_pipeline.py
+.runtime/app/bin/ruff check notebooks/demo.ipynb
+.runtime/app/bin/ruff format --check notebooks/demo.ipynb
+.runtime/app/bin/python scripts/check_delivery.py
+uv pip check --python .runtime/notebook/bin/python
 ```
+
+執行後的 Notebook、完整 run、檢查日誌與報告都保存在本機 `outputs/`，不納入 Git。
+程式碼中的 Notebook 應保持空輸出，避免將某次執行狀態誤認為專案的永久能力。

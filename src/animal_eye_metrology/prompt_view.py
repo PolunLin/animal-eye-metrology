@@ -28,7 +28,8 @@ def eye_prompt_workspace(dataset: CocoDataset, config: Any, *, assets_directory:
     cfg = settings(
         Path(
             os.environ.get(
-                "AEM_EYE_POC_CONFIG", assets_directory.parent / "configs/eye_segmentation_poc.toml"
+                "AEM_EYE_POC_CONFIG",
+                assets_directory.parents[1] / "configs/eye_segmentation_poc.toml",
             )
         )
     )

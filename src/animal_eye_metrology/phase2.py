@@ -30,6 +30,20 @@ from animal_eye_metrology.visualization import render_instance_overlay
 LOGGER = logging.getLogger(__name__)
 
 
+def project_source_hashes(root: Path) -> dict[str, str]:
+    """Record public method/code sources and the original research spec when locally present."""
+    sources = [
+        root / "pyproject.toml",
+        root / "uv.lock",
+        root / "docs/methodology.md",
+        *sorted((root / "src/animal_eye_metrology").glob("*.py")),
+    ]
+    historical_spec = root / "docs/phase2_instance_segmentation.md"
+    if historical_spec.is_file():
+        sources.append(historical_spec)
+    return {str(path.relative_to(root)): sha256_file(path) for path in sources}
+
+
 def read_config(path: Path) -> tuple[dict[str, Any], AnalysisConfig]:
     path = path.expanduser().resolve()
     with path.open("rb") as handle:
@@ -537,15 +551,7 @@ def run(settings: dict[str, Any], data: AnalysisConfig, *, limit: int | None = N
             "actual_torch_threads": torch.get_num_threads(),
             "source_files_unchanged": True,
             "input_sha256": source_hashes,
-            "source_sha256": {
-                str(path.relative_to(root)): sha256_file(path)
-                for path in [
-                    root / "pyproject.toml",
-                    root / "uv.lock",
-                    root / "docs/phase2_instance_segmentation.md",
-                    *sorted(Path(__file__).parent.glob("*.py")),
-                ]
-            },
+            "source_sha256": project_source_hashes(root),
             "images": image_records,
             "execution": {"argv": sys.argv, "working_directory": str(Path.cwd())},
             "artifacts_sha256": {

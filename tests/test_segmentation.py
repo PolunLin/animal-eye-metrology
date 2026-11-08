@@ -2,6 +2,7 @@
 
 import copy
 import json
+from pathlib import Path
 
 import pytest
 
@@ -25,6 +26,38 @@ from animal_eye_metrology.segmentation import (  # noqa: E402
 def rle(mask):
     encoded = mask_utils.encode(np.asfortranarray(mask.astype(np.uint8)))
     return {"size": list(mask.shape), "counts": encoded["counts"].decode("ascii")}
+
+
+def test_source_provenance_requires_public_methods_but_not_local_research_archives(
+    tmp_path: Path,
+) -> None:
+    from animal_eye_metrology.phase2 import project_source_hashes
+    from animal_eye_metrology.verification import sha256_file
+
+    for relative in (
+        "pyproject.toml",
+        "uv.lock",
+        "docs/methodology.md",
+        "src/animal_eye_metrology/phase2.py",
+    ):
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"SYNTHETIC PROVENANCE FIXTURE: {relative}\n")
+    public = project_source_hashes(tmp_path)
+    assert public["docs/methodology.md"] == sha256_file(tmp_path / "docs/methodology.md")
+    assert public["src/animal_eye_metrology/phase2.py"] == sha256_file(
+        tmp_path / "src/animal_eye_metrology/phase2.py"
+    )
+    historical = tmp_path / "docs/phase2_instance_segmentation.md"
+    assert str(historical.relative_to(tmp_path)) not in public
+    historical.write_text("SYNTHETIC LOCAL ARCHIVE; NOT RESEARCH RESULTS.\n")
+    with_archive = project_source_hashes(tmp_path)
+    assert with_archive == public | {
+        "docs/phase2_instance_segmentation.md": sha256_file(historical)
+    }
+    (tmp_path / "docs/methodology.md").unlink()
+    with pytest.raises(FileNotFoundError):
+        project_source_hashes(tmp_path)
 
 
 def test_candidate_recovery_counts_only_matched_eligible_ids_in_the_same_image() -> None:

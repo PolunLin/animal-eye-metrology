@@ -39,6 +39,7 @@ from animal_eye_metrology.visualization import render_measurement_overlay
 
 LOGGER = logging.getLogger(__name__)
 COORDINATES = "top-left image edge (0,0); pixel centers (column+.5,row+.5)"
+DOCS_ROOT = Path(__file__).resolve().parents[2] / "docs"
 
 
 def write_csv(
@@ -391,7 +392,7 @@ def run(cfg: dict[str, Any], data: AnalysisConfig) -> Path:
             else (protocol_document, "phase3b_annotation_tool.md")
         )
         for name in documentation:
-            source = Path(__file__).resolve().parents[2] / "docs" / name
+            source = DOCS_ROOT / name
             if snapshot["protocol_version"] == V2_PROTOCOL_VERSION and name == protocol_document:
                 source = stage / "frozen/protocol.md"
             if source.is_file():

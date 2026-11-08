@@ -21,8 +21,9 @@
 | Source run_manifest.json SHA-256 | `db28c4f065d7b3630130c0112b6b89e1c5803e0796dd27c49e2f91870a1ff768` |
 | Original JPEG SHA-256 | `aeb172b088be9b334a97fcd4df1fe89b5730bc5836765a23c82f2b8b4ff3d03b` |
 
-原 run 紀錄見 [New Image Inference](../docs/new_image_inference.md#original-three-image-integration-run)。
+以上列出可核對的來源識別碼；完整 run 與執行報告僅在本機保存，不納入 Git。
 原圖、遮罩及完整 run 不在這個範例包；沒有圖時不能只看數字驗收眼部分割。
+模型、重心公式與評估界線見 [Methodology](../docs/methodology.md)。
 
 ## Fields
 

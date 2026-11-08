@@ -8,7 +8,8 @@
 
 ## Start
 
-從專案根目錄、已完成環境與模型準備後啟動；`AEM_INFERENCE_CONFIG` 選擇推論設定檔。
+先依 [Local Setup](setup.md) 完成環境與模型準備，再從專案根目錄啟動；
+`AEM_INFERENCE_CONFIG` 選擇推論設定檔。
 
 ```sh
 AEM_INFERENCE_CONFIG=configs/inference.runtime.toml .runtime/app/bin/python -m uvicorn \
@@ -97,3 +98,5 @@ API 與已核對權重準備完成後，可用既有開發圖檢查完整 HTTP �
 此指令不下載圖片或模型。它執行既有 A_r100／A_r050 方法，檢查兩類距離、保存結果、
 CSV／PNG 下載、錯誤上傳及合成空白圖；JSON 報告與退出碼同時保留成功或失敗。
 使用的仍是既有開發圖片，這是工程連通驗證，不新增人工參考或獨立準確度成績。
+公式與準確度評估規則見 [Methodology](methodology.md)。產出的 JSON 報告與 run 僅在本機保存，
+不將執行紀錄或圖片提交至 Git。

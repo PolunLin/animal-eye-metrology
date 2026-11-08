@@ -393,10 +393,12 @@ def main() -> None:
             digest,
         )
         if workspace == "Eye Segmentation Prompts":
-            eye_prompt_workspace(dataset, config, assets_directory=ROOT / "app")
+            eye_prompt_workspace(dataset, config, assets_directory=ROOT / "app/assets")
             return
         if workspace == "Eye Mask Annotation":
-            eye_mask_workspace(dataset, config, annotation_session, assets_directory=ROOT / "app")
+            eye_mask_workspace(
+                dataset, config, annotation_session, assets_directory=ROOT / "app/assets"
+            )
             return
         template = load_reviews(config.output / "eye_visibility_review.csv", result.review)
         with st.sidebar.expander("CSV 儲存位置"):

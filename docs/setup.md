@@ -5,16 +5,17 @@
 | 模式 | 必要資料 |
 | --- | --- |
 | 新圖推論／API | 本機 JPEG／PNG、三個固定權重、兩套執行環境；不需要 COCO 註記或眼睛 GT |
-| Results Explorer | 凍結三圖研究產物、原圖與 v1／v2 人工參考 |
-| COCO 審核與標註 | 本機 COCO 2017 val2017、官方 instances 註記與指定工作設定 |
+| Results Explorer | 本機凍結研究產物、原圖與 v1／v2 人工參考 |
+| COCO 審核與標註 | 本機 COCO 2017 val2017、官方 instances 註記、研究規範與指定工作設定 |
 
-Git 不附完整 COCO、權重或歷史 outputs。新圖模式可獨立執行；研究模式缺少對應產物時不會自動補造。
+Git 不附完整 COCO、權重、Phase 文件或歷史 outputs。新圖模式可獨立執行；
+研究模式需另外備妥其設定引用的規範與產物，缺少資料時不會自動補造。
 
 ## Fresh Runtime
 
 需要 Python 3.11、可建立虛擬環境的系統與套件下載環境。
 HRNet 依賴 MMCV CPU operators，沒有對應 wheel 時需要 C/C++ 編譯工具。
-既有真實模型證據來自 macOS arm64 CPU；Linux 範圍以 [Docker 驗證紀錄](docker.md#validation-status) 為準。
+重建工具支援 macOS arm64 與 Linux amd64；CPU 容器驗證範圍見 [Docker](docker.md#validation-status)。
 
 從儲存庫根目錄執行：
 
@@ -32,7 +33,8 @@ python3.11 scripts/check_runtime.py --config configs/inference.runtime.toml
 需要實際載入三個模型時，可在 runtime 檢查加入 `--load-models`；此步驟不是圖片準確度評估。
 
 應用／SAM2 使用 Torch 2.9.1；既有 HRNet 使用 Torch 2.2.2、NumPy 1.26.4、MMCV 2.1.0。
-兩套環境保留既有模型行為。主 `uv.lock` 對應原研究專案，單獨 `uv sync` 不能重建完整新圖環境。
+兩套環境保留既有模型行為。主 `uv.lock` 可供輕量開發／測試使用，
+單獨 `uv sync` 不能代替應用／pose 的平台 lock 或重建完整模型環境。
 
 ## Dependency Sources and Records
 
@@ -65,7 +67,7 @@ python3.11 scripts/bootstrap.py --all --root .runtime-preview --dry-run
 暫時性 HTTP／連線錯誤最多嘗試 3 次，stderr 以 JSON 記錄檔名、實際網址及 attempt；
 404 與完整性錯誤不重試。暫存檔獨立建立、驗證成功才原子發布，不能覆蓋另一程序新建立的權重。
 
-YOLO 的 canonical release 下載點在本輪持續回傳 504；暫態失敗後改走同一官方固定
+YOLO 的 canonical release 下載點發生暫態失敗後，後續嘗試改走同一官方固定
 [GitHub asset API](https://api.github.com/repos/ultralytics/assets/releases/assets/340096333)。
 官方發行資料的 size 23,467,933 bytes／SHA-256 與原凍結權重完全相同，
 依舊強制核對 `3da1d83e31caec96f9300eb4064f4f62882c133c7c264d63dfe61a7c197837a4`；
@@ -124,13 +126,26 @@ API、CLI 與 UI 若使用相同輸出目錄，透過 `.inference.lock` 跨程�
 缺檔、來源或雜湊不符時，先查看檢查結果及日誌；不要以任意升版、改名或回填零值排除錯誤。
 歷史設定路徑以設定檔所在目錄解析，工程入口使用配套 runtime 設定。
 
-## Checks and Troubleshooting
+## Validation
 
 ```sh
 .runtime/app/bin/python -m pytest -q
 .runtime/app/bin/ruff check src tests app scripts
 .runtime/app/bin/ruff format --check src tests app scripts
+.runtime/app/bin/python scripts/check_delivery.py
 ```
+
+| 驗證層次 | 方式與可查證的基線 |
+| --- | --- |
+| 單元／契約測試 | 隔離合成資料驗證公式、API、保存與失敗行為；[合併後 CI](https://github.com/PolunLin/animal-eye-metrology/actions/runs/42474324880) 通過 |
+| CPU 模型與 HTTP 流程 | [原生 Linux CI](https://github.com/PolunLin/animal-eye-metrology/actions/runs/42472036879) 通過建置、400 項容器測試、三模型載入與實際圖片推論／下載 |
+| 幾何與 CSV | `tests/test_metrology.py` 驗證已知幾何；[範例說明](../examples/README.md#read-and-verify) 提供保存端點的獨立公式核對 |
+
+上述 CI 是指定提交的工程驗證基線，不表示每個後續版本已重新執行模型。
+單元測試不執行完整 COCO 實驗；單張開發圖的推論成功不代表獨立準確率驗收。
+自己的實跑結果應保存在 `outputs/`，記錄設定、版本與輸入／輸出雜湊，不提交執行報告或產物。
+
+## Troubleshooting
 
 | 現象 | 檢查 |
 | --- | --- |
@@ -141,5 +156,4 @@ API、CLI 與 UI 若使用相同輸出目錄，透過 `.inference.lock` 跨程�
 | 有距離但眼睛分錯 | 候選值不代表合格；檢視逐眼遮罩、原因與資格欄位 |
 | Results Explorer 缺檔 | 備妥凍結研究產物；先用新圖模式或已提交的 CSV 範例 |
 
-單元測試使用隔離合成資料，不執行完整 COCO 實驗。模型實跑另外保存設定、版本與輸入／輸出雜湊。
-歷史研究入口見 [文件索引](index.md)。
+操作入口見 [文件索引](index.md)，模型與量測規則見 [Methodology](methodology.md)。

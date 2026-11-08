@@ -13,6 +13,16 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
+PUBLIC_DOCUMENTS = (
+    "docs/index.md",
+    "docs/setup.md",
+    "docs/docker.md",
+    "docs/api.md",
+    "docs/architecture.md",
+    "docs/methodology.md",
+    "docs/notebook_demo.md",
+)
+
 REQUIRED_FILES = (
     "README.md",
     "LICENSE",
@@ -40,33 +50,34 @@ REQUIRED_FILES = (
     "src/animal_eye_metrology/eye_pose_worker.py",
     "src/animal_eye_metrology/sam_runtime.py",
     "app/streamlit_app.py",
-    "docs/setup.md",
-    "docs/docker.md",
-    "docs/api.md",
-    "docs/architecture.md",
-    "docs/methodology.md",
-    "docs/index.md",
-    "docs/research_history.md",
-    "docs/delivery_validation.md",
+    "app/assets/eye_canvas.js",
+    "app/assets/eye_prompt_canvas.js",
+    *PUBLIC_DOCUMENTS,
     "examples/measurements.csv",
     "examples/input_manifest.csv",
     "examples/README.md",
 )
 
 
-def check_readme_links(root: Path) -> None:
-    """Check relative documentation links; external URLs are not probed."""
-    text = (root / "README.md").read_text(encoding="utf-8")
+def check_documentation_links(root: Path) -> None:
+    """Check published documentation links without relying on local research archives."""
     broken = []
-    for target in re.findall(r"\[[^\]]+\]\(([^\s)]+)\)", text):
-        parsed = urlsplit(target)
-        if parsed.scheme or parsed.netloc or not parsed.path:
-            continue
-        path = (root / unquote(parsed.path)).resolve()
-        if not path.is_relative_to(root.resolve()) or not path.exists():
-            broken.append(target)
+    for relative in ("README.md", *PUBLIC_DOCUMENTS, "examples/README.md"):
+        document = root / relative
+        text = document.read_text(encoding="utf-8")
+        for target in re.findall(r"\[[^\]]+\]\(([^\s)]+)\)", text):
+            parsed = urlsplit(target)
+            if parsed.scheme or parsed.netloc or not parsed.path:
+                continue
+            path = (document.parent / unquote(parsed.path)).resolve()
+            if not path.is_relative_to(root.resolve()) or not path.exists():
+                broken.append(f"{relative}: {target}")
+                continue
+            project_path = path.relative_to(root).as_posix()
+            if project_path.startswith("docs/") and project_path not in PUBLIC_DOCUMENTS:
+                broken.append(f"{relative}: {target} (local research archive)")
     if broken:
-        raise ValueError(f"Missing or out-of-repository README links: {broken}")
+        raise ValueError(f"Unpublished, missing or out-of-repository documentation links: {broken}")
 
 
 def check_recorded_csv(root: Path) -> None:
@@ -101,7 +112,7 @@ def check_delivery(root: Path) -> dict[str, Any]:
     missing = [name for name in REQUIRED_FILES if not (root / name).is_file()]
     checks.append({"name": "required_files", "passed": not missing, "detail": missing})
     for name, operation in (
-        ("readme_local_links", lambda: check_readme_links(root)),
+        ("documentation_local_links", lambda: check_documentation_links(root)),
         ("recorded_csv", lambda: check_recorded_csv(root)),
     ):
         try:
