@@ -45,6 +45,7 @@ jobs:
   cpu-image:
     if: >-
       (github.event_name == 'workflow_dispatch' && inputs.build_docker) ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[cpu-verify]')) ||
       (github.event_name == 'push' && contains(github.event.head_commit.message, '[cpu-verify]'))
     needs: unit-tests
     runs-on: ubuntu-24.04
@@ -73,15 +74,55 @@ jobs:
           assert hashlib.sha256(target.read_bytes()).hexdigest() == row['sha256']
           PY
           python scripts/prepare_models.py --download 2> outputs/ci/models.stderr.jsonl | tee outputs/ci/models.json
-      - name: Build the Linux amd64 CPU runtime
+      - name: Verify private files are excluded from the Docker context
         run: |
-          mkdir -p outputs/ci
+          python - <<'PYTHON'
+          from pathlib import Path
+          # Only synthetic canaries exist on this fresh runner, never personal notes.
+          for name in ("local_only/interview_qa.md", "local_only/research/backup.md", "AGENTS.md", ".runtime/private.txt", "docs/private_research.md"):
+              path = Path(name)
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_text("Synthetic packaging exclusion probe.\n")
+          PYTHON
+          docker build --file - --output "type=local,dest=$RUNNER_TEMP/aem-context" . <<'DOCKERFILE' 2>&1 | tee outputs/ci/context_build.log
+          FROM scratch
+          COPY . /
+          DOCKERFILE
+          python - <<'PYTHON' | tee outputs/ci/context_audit.json
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "aem-context"
+          forbidden = ["local_only", "AGENTS.md", ".git", ".runtime", ".env", "weights", "data", "outputs", "docs/private_research.md"]
+          assert not any((root / name).exists() for name in forbidden)
+          assert {p.name for p in (root / "docs").iterdir()} == {"api.md", "architecture.md", "methodology.md"}
+          assert not (root / "src/animal_eye_metrology/research").exists()
+          print(json.dumps({"status": "passed", "private_files_in_context": False, "canaries": "synthetic_only"}))
+          PYTHON
+      - name: Build with the README Docker Compose configuration
+        run: |
+          cp .env.example .env
           git rev-parse HEAD > outputs/ci/source_commit.txt
-          docker build --platform linux/amd64 --tag animal-eye-metrology:ci . 2>&1 | tee outputs/ci/docker_build.log
+          docker compose config --quiet
+          docker compose --progress plain build 2>&1 | tee outputs/ci/docker_build.log
+      - name: Verify the built application contains only delivered files
+        run: |
+          docker run --rm -i --network none animal-eye-metrology:cpu python - <<'PYTHON' | tee outputs/ci/image_content_audit.json
+          import json
+          from pathlib import Path
+          root = Path("/app")
+          for name in ("local_only", "AGENTS.md", ".git", ".runtime", ".env", "docs/private_research.md", "src/animal_eye_metrology/research"):
+              assert not (root / name).exists(), name
+          assert {p.name for p in (root / "docs").iterdir()} == {"api.md", "architecture.md", "methodology.md"}
+          for name in ("data", "weights", "outputs"):
+              assert not list((root / name).iterdir()), name
+          assert (root / ".gitignore").is_file()
+          print(json.dumps({"status": "passed", "private_files_in_image": False, "assets_baked_into_image": False}))
+          PYTHON
+          docker run --rm --network none animal-eye-metrology:cpu python scripts/check_delivery.py | tee outputs/ci/container_delivery.json
       - name: Save the built image identity and actual environment inventories
         run: |
-          docker image inspect animal-eye-metrology:ci > outputs/ci/image-inspect.json
-          docker run --rm --network none -v "$PWD/outputs:/audit" animal-eye-metrology:ci python -c '
+          docker image inspect animal-eye-metrology:cpu > outputs/ci/image-inspect.json
+          docker run --rm --network none -v "$PWD/outputs:/audit" animal-eye-metrology:cpu python -c '
           from pathlib import Path
           for name in ("app", "pose"):
               source = Path("/opt/venvs") / f"environment_{name}.json"
@@ -89,7 +130,7 @@ jobs:
           '
       - name: Import the application models without loading weights
         run: >-
-          docker run --rm --network none animal-eye-metrology:ci
+          docker run --rm --network none animal-eye-metrology:cpu
           python -c "import fastapi, streamlit, torch, torchvision;
           from ultralytics import YOLO;
           from sam2.sam2_image_predictor import SAM2ImagePredictor;
@@ -98,7 +139,7 @@ jobs:
           2>&1 | tee outputs/ci/app_imports.log
       - name: Import the isolated pose runtime and exercise CPU operators
         run: >-
-          docker run --rm --network none animal-eye-metrology:ci
+          docker run --rm --network none animal-eye-metrology:cpu
           /opt/venvs/pose/bin/python -c "import torch, mmcv, mmpose;
           from mmcv.ops import nms;
           assert torch.version.cuda is None;
@@ -106,31 +147,51 @@ jobs:
           print('Pose imports and CPU operator passed; no weights loaded.')"
           2>&1 | tee outputs/ci/pose_imports.log
       - name: Run the image's offline contract tests
-        run: docker run --rm --network none animal-eye-metrology:ci python -m pytest -q -o faulthandler_timeout=15 2>&1 | tee outputs/ci/container-tests.log
+        run: docker run --rm --network none animal-eye-metrology:cpu python -m pytest -q -o faulthandler_timeout=15 2>&1 | tee outputs/ci/container-tests.log
       - name: Check sources, CPU operators and actual model loading
         run: >-
           docker run --rm --network none -v "$PWD/weights:/app/weights:ro"
           -v "$PWD/outputs:/app/outputs"
-          animal-eye-metrology:ci python scripts/check_runtime.py
+          animal-eye-metrology:cpu python scripts/check_runtime.py
           --config configs/inference.docker.toml --load-models
           --cache-dir outputs/runtime-check-cache
           2> outputs/ci/runtime_check.stderr.txt | tee outputs/ci/runtime_check.json
+      - name: Start the README UI and API services
+        run: |
+          docker compose up -d --no-build --wait --wait-timeout 180
+          curl --fail --silent --show-error http://127.0.0.1:8517/_stcore/health > outputs/ci/ui_health.txt
+          curl --fail --silent --show-error http://127.0.0.1:8000/health > outputs/ci/api_health.json
+          curl --fail --silent --show-error http://127.0.0.1:8000/docs > outputs/ci/api_docs.html
+          docker compose exec -T ui python -c "from streamlit.testing.v1 import AppTest; app=AppTest.from_file('app/streamlit_app.py', default_timeout=60).run(); assert not app.exception; assert len(app.get('file_uploader')) == 1; print('Streamlit entry point passed.')" > outputs/ci/ui_entrypoint.log 2>&1
       - name: Run the HTTP inference and download smoke checks
         run: |
-          docker run -d --network none --name aem-ci -v "$PWD/weights:/app/weights:ro" -v "$PWD/data:/app/data:ro" -v "$PWD/outputs:/app/outputs" animal-eye-metrology:ci python -m uvicorn animal_eye_metrology.api:app --host 0.0.0.0 --port 8000
-          ready=0
-          for attempt in $(seq 1 30); do
-            if docker exec aem-ci python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=10)" > outputs/ci/health.stdout.txt 2> outputs/ci/health.stderr.txt; then ready=1; break; fi
-            sleep 2
-          done
-          test "$ready" -eq 1
-          docker exec aem-ci python scripts/smoke_api.py --image data/000000125405.jpg --report outputs/docker_smoke.json | tee outputs/ci/smoke.stdout.log
-      - name: Collect container diagnostics
+          docker compose exec -T api python scripts/smoke_api.py --image data/000000125405.jpg --report outputs/docker_smoke.json | tee outputs/ci/smoke.stdout.log
+          python - <<'PYTHON'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("outputs/docker_smoke.json").read_text())
+          assert report["status"] == "passed"
+          assert report["eyes"] == 4 and report["candidate_distance_rows"] == 3
+          PYTHON
+      - name: Collect container diagnostics and verify persisted outputs
         if: always()
         run: |
           mkdir -p outputs/ci
-          docker logs aem-ci > outputs/ci/api.log 2>&1 || true
-          docker inspect aem-ci > outputs/ci/api-container-inspect.json 2>&1 || true
+          docker compose logs --no-color > outputs/ci/compose.log 2>&1 || true
+          docker compose ps --all --format json > outputs/ci/compose-containers.json 2>&1 || true
+          docker compose down
+          if test -f outputs/docker_smoke.json; then
+            python - <<'PYTHON'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("outputs/docker_smoke.json").read_text())
+          if report["status"] == "passed":
+              run = Path("outputs/inference") / report["run_id"]
+              assert (run / "result.json").is_file()
+              assert (run / "measurements.csv").is_file()
+              print("Inference outputs persist after docker compose down.")
+          PYTHON
+          fi
       - name: Save model-run evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -139,8 +200,3 @@ jobs:
           path: outputs/
           if-no-files-found: warn
           retention-days: 14
-      - name: Show API logs and stop the test container
-        if: always()
-        run: |
-          docker logs aem-ci || true
-          docker rm -f aem-ci || true
