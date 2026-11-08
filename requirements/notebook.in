@@ -1,0 +1,7 @@
+# Lightweight demo kernel; existing inference workers keep their own pinned environments.
+# Compile with: uv pip compile --universal --python-version 3.11 requirements/notebook.in
+jupyterlab>=4,<5
+ipykernel>=6,<8
+nbclient>=0.10,<1
+numpy>=1.26,<3
+Pillow>=10.4,<13

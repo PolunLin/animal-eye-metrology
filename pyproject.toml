@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling>=1.26,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "animal-eye-metrology"
+version = "0.1.0"
+description = "Reproducible animal segmentation and pixel-distance metrology"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = []
+
+[project.optional-dependencies]
+visualization = ["Pillow>=10.4,<13", "pycocotools>=2.0.7,<3"]
+explorer = ["streamlit>=1.67,<2"]
+api = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1", "python-multipart>=0.0.20,<1"]
+segmentation = [
+    "torch==2.9.1",
+    "torchvision==0.24.1",
+    "ultralytics==8.3.230",
+]
+
+[project.scripts]
+animal-eye-metrology = "animal_eye_metrology.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.8,<1", "httpx>=0.27,<1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

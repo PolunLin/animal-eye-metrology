@@ -1,0 +1,45 @@
+# Local-only, fixed 100-image compatibility/timing pilot; not the full benchmark.
+phase1_config = "phase1.toml"
+output = "../outputs/phase2/pilot100"
+sample_size = 100
+seed = 42
+threads = 4
+warmup_runs = 3
+confidence_floor = 0.001
+max_detections = 100
+
+[[models]]
+name = "yolo11n_seg"
+label = "YOLO11n-seg"
+backend = "ultralytics"
+package_version = "8.3.230"
+checkpoint = "../weights/yolo11n-seg.pt"
+sha256 = "55ed65c56c91713d23e8402371c6c49a6fd84f257f7dce452e8d70e41dcbe152"
+source = "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.pt"
+
+[[models]]
+name = "yolo26n_seg"
+label = "YOLO26n-seg"
+backend = "ultralytics"
+package_version = "8.4.0"
+checkpoint = "../weights/yolo26n-seg.pt"
+sha256 = "361fbfabab285c3237700b6bb91d7ecfa602cd945fffda8dbe1242829b71e73f"
+source = "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n-seg.pt"
+
+[[models]]
+name = "maskrcnn_v2"
+label = "Mask R-CNN ResNet-50 FPN v2"
+backend = "torchvision"
+package_version = "0.24.1"
+checkpoint = "../weights/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth"
+sha256 = "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e"
+source = "https://download.pytorch.org/models/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth"
+
+[[models]]
+name = "yolo26s_seg"
+label = "YOLO26s-seg"
+backend = "ultralytics"
+package_version = "8.4.0"
+checkpoint = "../weights/yolo26s-seg.pt"
+sha256 = "3da1d83e31caec96f9300eb4064f4f62882c133c7c264d63dfe61a7c197837a4"
+source = "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26s-seg.pt"

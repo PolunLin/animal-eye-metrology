@@ -1,0 +1,28 @@
+# HRNet environment; MMCV and MMPose are built/installed separately after PyTorch.
+torch==2.2.2
+torchvision==0.17.2
+numpy==1.26.4
+opencv-python==4.10.0.84
+scipy==1.13.1
+matplotlib==3.8.4
+mmengine==0.10.7
+mmdet==3.3.0
+xtcocotools==1.14.3
+addict==2.4.0
+# chumpy==0.70 is appended to each pose lock after dependency resolution.
+# Its legacy setup imports pip during metadata generation; bootstrap installs
+# that exact pin with the already installed pip/setuptools/NumPy build tools.
+# Its declared NumPy/SciPy/six dependencies are included in the resolved lock.
+six==1.17.0
+json-tricks==3.17.3
+munkres==1.1.4
+psutil==7.2.2
+shapely==2.2.0
+terminaltables==3.1.10
+typing-extensions==4.16.0
+yapf==0.43.0
+packaging==24.2
+setuptools==69.5.1
+wheel==0.48.0
+Cython==3.3.1
+ninja==1.13.2

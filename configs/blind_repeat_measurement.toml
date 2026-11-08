@@ -1,0 +1,14 @@
+# Reuse the approved freeze/measurement pipeline for the independently redrawn four eyes.
+[data]
+phase1_config = "phase1.toml"
+proposal_csv = "../outputs/phase3/blind_repeat_v1/inputs/proposed_instances.csv"
+ground_truth_directory = "../outputs/phase3/blind_repeat_v1/annotations"
+
+[snapshot]
+protocol_version = "eye-visible-aperture-v1"
+expected_images = 1
+expected_instances = 2
+expected_eyes = 4
+
+[output]
+directory = "../outputs/phase3/blind_repeat_v1/measurement_baseline_v1"

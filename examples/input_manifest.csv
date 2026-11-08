@@ -1,0 +1,2 @@
+image_id,file_name,source_url,sha256,purpose
+125405,000000125405.jpg,https://images.cocodataset.org/val2017/000000125405.jpg,aeb172b088be9b334a97fcd4df1fe89b5730bc5836765a23c82f2b8b4ff3d03b,existing_development_image_engineering_smoke_not_independent_validation

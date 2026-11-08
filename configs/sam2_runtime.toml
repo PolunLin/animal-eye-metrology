@@ -1,0 +1,11 @@
+# Current application only; research three-model comparison configuration is preserved.
+runtime_kind = "application"
+weights_directory = "../weights/eye_poc"
+device = "cpu"
+threads = 4
+seed = 42
+
+[models.sam2_1_tiny]
+checkpoint = "sam2.1_hiera_tiny.pt"
+distribution = "SAM-2"
+commit = "2b90b9f5ceec907a1c18123530e92e794ad901a4"

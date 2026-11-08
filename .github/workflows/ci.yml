@@ -1,0 +1,139 @@
+name: Project checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      build_docker:
+        description: Build and check the Linux amd64 CPU image (no model weights)
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+      - name: Install the pinned dependency manager
+        run: python -m pip install uv==0.9.18
+      - name: Install unit-test dependencies without model runtimes
+        run: uv sync --extra visualization --extra explorer --extra api --group dev --locked
+      - name: Check the deliverable
+        run: uv run --no-sync python scripts/check_delivery.py
+      - name: Run offline contract tests
+        run: uv run --no-sync pytest -q -o faulthandler_timeout=15
+      - name: Check Python style
+        run: |
+          uv run --no-sync ruff check src tests app scripts
+          uv run --no-sync ruff format --check src tests app scripts
+
+  cpu-image:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.build_docker) ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[cpu-verify]'))
+    needs: unit-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the Linux amd64 CPU runtime
+        run: |
+          mkdir -p outputs/ci
+          git rev-parse HEAD > outputs/ci/source_commit.txt
+          docker build --platform linux/amd64 --tag animal-eye-metrology:ci . 2>&1 | tee outputs/ci/docker_build.log
+      - name: Save the built image identity and actual environment inventories
+        run: |
+          docker image inspect animal-eye-metrology:ci > outputs/ci/image-inspect.json
+          docker run --rm --network none -v "$PWD/outputs:/audit" animal-eye-metrology:ci python -c '
+          from pathlib import Path
+          for name in ("app", "pose"):
+              source = Path("/opt/venvs") / f"environment_{name}.json"
+              (Path("/audit/ci") / source.name).write_bytes(source.read_bytes())
+          '
+      - name: Import the application models without loading weights
+        run: >-
+          docker run --rm --network none animal-eye-metrology:ci
+          python -c "import fastapi, streamlit, torch, torchvision;
+          from ultralytics import YOLO;
+          from sam2.sam2_image_predictor import SAM2ImagePredictor;
+          assert torch.version.cuda is None;
+          print('Application imports passed; no inference or accuracy evaluation.')"
+          2>&1 | tee outputs/ci/app_imports.log
+      - name: Import the isolated pose runtime and exercise CPU operators
+        run: >-
+          docker run --rm --network none animal-eye-metrology:ci
+          /opt/venvs/pose/bin/python -c "import torch, mmcv, mmpose;
+          from mmcv.ops import nms;
+          assert torch.version.cuda is None;
+          nms(torch.tensor([[0., 0., 1., 1.]]), torch.tensor([1.]), 0.5);
+          print('Pose imports and CPU operator passed; no weights loaded.')"
+          2>&1 | tee outputs/ci/pose_imports.log
+      - name: Run the image's offline contract tests
+        run: docker run --rm --network none animal-eye-metrology:ci python -m pytest -q -o faulthandler_timeout=15 2>&1 | tee outputs/ci/container-tests.log
+      - name: Prepare the existing development fixture and approved weights
+        run: |
+          mkdir -p weights data outputs
+          cp examples/input_manifest.csv outputs/ci/input_manifest.csv
+          python - <<'PY'
+          import csv, hashlib, pathlib, urllib.request
+          row = next(csv.DictReader(open('examples/input_manifest.csv')))
+          target = pathlib.Path('data') / row['file_name']
+          with urllib.request.urlopen(row['source_url'], timeout=120) as response:
+              target.write_bytes(response.read())
+          assert hashlib.sha256(target.read_bytes()).hexdigest() == row['sha256']
+          PY
+          docker run --rm -v "$PWD/weights:/app/weights" animal-eye-metrology:ci python scripts/prepare_models.py --download | tee outputs/ci/models.json
+      - name: Check sources, CPU operators and actual model loading
+        run: >-
+          docker run --rm --network none -v "$PWD/weights:/app/weights:ro"
+          -v "$PWD/outputs:/app/outputs"
+          animal-eye-metrology:ci python scripts/check_runtime.py
+          --config configs/inference.docker.toml --load-models
+          --cache-dir outputs/runtime-check-cache
+          2> outputs/ci/runtime_check.stderr.txt | tee outputs/ci/runtime_check.json
+      - name: Run the HTTP inference and download smoke checks
+        run: |
+          docker run -d --network none --name aem-ci -v "$PWD/weights:/app/weights:ro" -v "$PWD/data:/app/data:ro" -v "$PWD/outputs:/app/outputs" animal-eye-metrology:ci python -m uvicorn animal_eye_metrology.api:app --host 0.0.0.0 --port 8000
+          ready=0
+          for attempt in $(seq 1 30); do
+            if docker exec aem-ci python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=10)" > outputs/ci/health.stdout.txt 2> outputs/ci/health.stderr.txt; then ready=1; break; fi
+            sleep 2
+          done
+          test "$ready" -eq 1
+          docker exec aem-ci python scripts/smoke_api.py --image data/000000125405.jpg --report outputs/docker_smoke.json | tee outputs/ci/smoke.stdout.log
+      - name: Collect container diagnostics
+        if: always()
+        run: |
+          mkdir -p outputs/ci
+          docker logs aem-ci > outputs/ci/api.log 2>&1 || true
+          docker inspect aem-ci > outputs/ci/api-container-inspect.json 2>&1 || true
+      - name: Save model-run evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cpu-runtime-evidence
+          path: outputs/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Show API logs and stop the test container
+        if: always()
+        run: |
+          docker logs aem-ci || true
+          docker rm -f aem-ci || true

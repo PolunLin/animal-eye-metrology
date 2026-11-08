@@ -1,0 +1,27 @@
+# COCO ten-category upload POC; bird HRNet outputs are experimental, outside AP-10K's domain.
+# Existing models and ROI baseline; no GT or manual prompts, no accuracy guarantee by category.
+output_directory = "../outputs/inference"
+python = "/opt/venvs/app/bin/python"
+pose_python = "/opt/venvs/pose/bin/python"
+detector_source = "/opt/venvs/app/lib/python3.11/site-packages"
+detector_checkpoint = "../weights/yolo26s-seg.pt"
+detector_checkpoint_sha256 = "3da1d83e31caec96f9300eb4064f4f62882c133c7c264d63dfe61a7c197837a4"
+pose_checkpoint = "../weights/eye_pose/hrnet_w32_ap10k_256x256-18aac840_20211029.pth"
+pose_checkpoint_sha256 = "18aac840eee49f190e1443d93c6c23784920d2fd90813a42d35c918ec23a36e9"
+pose_source_manifest = "eye_pose_source_manifest.json"
+mmpose_commit = "5408bc76f5b848cf925a0d1857899011d8c5b497"
+sam_runtime = "sam2_runtime.toml"
+sam_checkpoint = "../weights/eye_poc/sam2.1_hiera_tiny.pt"
+sam_checkpoint_sha256 = "7402e0d864fa82708a20fbd15bc84245c2f26dff0eb43a4b5b93452deb34be69"
+device = "cpu"
+seed = 42
+threads = 4
+supported_categories = ["bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe"]
+animal_score_threshold = 0.5
+image_size = 640
+confidence_floor = 0.001
+nms_iou = 0.7
+max_detections = 100
+max_upload_bytes = 20971520
+max_image_pixels = 12000000
+stage_timeout_seconds = 900

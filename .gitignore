@@ -153,6 +153,7 @@ activemq-data/
 .env
 .envrc
 .venv
+.venv-eye-pose/
 env/
 venv/
 ENV/
@@ -218,3 +219,80 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Animal Eye Metrology: local datasets, weights, generated artifacts, and OS metadata.
+.runtime/
+.DS_Store
+/data/
+/datasets/
+/outputs/
+/models/
+/weights/
+/configs/*.local.toml
+*.zip
+*.tar
+*.tar.gz
+*.pth
+*.pt
+*.onnx
+instances_*.json
+
+# macOS metadata
+.DS_Store
+
+# Environment overrides and credentials (templates must contain placeholders only)
+.env.*
+*.env
+.envrc.*
+!.env.example
+!.env.template
+!.envrc.example
+!.envrc.template
+.secrets/
+.aws/
+.ssh/
+secrets.*
+credentials.json
+service-account*.json
+service_account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# Raw datasets and COCO downloads; keep research documents and small fixtures trackable
+/data/raw/
+/data/coco/
+/datasets/coco/
+/coco/
+train2017/
+val2017/
+test2017/
+unlabeled2017/
+train2017.zip
+val2017.zip
+test2017.zip
+unlabeled2017.zip
+annotations_trainval2017.zip
+image_info_test2017.zip
+
+# Model weights and checkpoints; model source code and configuration stay trackable
+weights/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.h5
+*.hdf5
+*.tflite
+*.pb
+*.weights
+*.bin
+*.gguf
+*.pkl
+*.pickle
+*.joblib

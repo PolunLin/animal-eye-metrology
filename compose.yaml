@@ -1,0 +1,36 @@
+name: animal-eye-metrology
+x-runtime: &runtime
+  image: animal-eye-metrology:cpu
+  platform: linux/amd64
+  build:
+    context: .
+  environment:
+    AEM_INFERENCE_CONFIG: /app/configs/inference.docker.toml
+    AEM_WORKSPACE: ${AEM_WORKSPACE:-New Image Inference}
+  volumes:
+    - ${WEIGHTS_DIRECTORY:-./weights}:/app/weights:ro
+    - ${DATA_DIRECTORY:-./data}:/app/data:ro
+    - ${OUTPUTS_DIRECTORY:-./outputs}:/app/outputs
+  init: true
+services:
+  ui:
+    <<: *runtime
+    ports:
+      - "127.0.0.1:${UI_PORT:-8517}:8517"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8517/_stcore/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+  api:
+    <<: *runtime
+    command: ["python", "-m", "uvicorn", "animal_eye_metrology.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=10)"]
+      interval: 60s
+      timeout: 15s
+      start_period: 20s
+      retries: 3
