@@ -10,7 +10,7 @@ WORKDIR /app
 RUN python -m pip install --no-cache-dir uv==0.9.18
 COPY pyproject.toml README.md LICENSE uv.lock ./
 COPY requirements/ requirements/
-COPY scripts/ scripts/
+COPY scripts/bootstrap.py scripts/bootstrap.py
 COPY src/ src/
 RUN python scripts/bootstrap.py --all --root /opt/venvs --cache-dir /tmp/aem-build-cache
 

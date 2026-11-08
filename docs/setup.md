@@ -59,6 +59,18 @@ python3.11 scripts/bootstrap.py --all --root .runtime-preview --dry-run
 要保留已有的 `.runtime` 並建立另一組，可指定全新的 `--root`；配套 inference 設定中的
 `python`、`pose_python` 與 `detector_source` 也須對應新位置。不要讓新設定誤用舊環境。
 
+## Model Downloads
+
+`prepare_models.py` 只下載缺失檔案，既有檔案 SHA 不符時保留原檔並回報錯誤。
+暫時性 HTTP／連線錯誤最多嘗試 3 次，stderr 以 JSON 記錄檔名、實際網址及 attempt；
+404 與完整性錯誤不重試。暫存檔獨立建立、驗證成功才原子發布，不能覆蓋另一程序新建立的權重。
+
+YOLO 的 canonical release 下載點在本輪持續回傳 504；暫態失敗後改走同一官方固定
+[GitHub asset API](https://api.github.com/repos/ultralytics/assets/releases/assets/340096333)。
+官方發行資料的 size 23,467,933 bytes／SHA-256 與原凍結權重完全相同，
+依舊強制核對 `3da1d83e31caec96f9300eb4064f4f62882c133c7c264d63dfe61a7c197837a4`；
+沒有改模型、權重版本或量測規則，也沒有新增帳號或套件依賴。
+
 ## Interrupted Builds
 
 下載或編譯中斷後，先讀取對應的 `.runtime/environment_*.json`。只有狀態為

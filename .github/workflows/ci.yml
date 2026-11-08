@@ -53,6 +53,26 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Prepare the existing development fixture and approved weights
+        run: |
+          mkdir -p weights data outputs/ci
+          cp examples/input_manifest.csv outputs/ci/input_manifest.csv
+          python - <<'PY'
+          import csv, hashlib, pathlib, time, urllib.error, urllib.request
+          row = next(csv.DictReader(open('examples/input_manifest.csv')))
+          target = pathlib.Path('data') / row['file_name']
+          for attempt in range(3):
+              try:
+                  with urllib.request.urlopen(row['source_url'], timeout=120) as response:
+                      target.write_bytes(response.read())
+                  break
+              except (urllib.error.URLError, TimeoutError):
+                  if attempt == 2:
+                      raise
+                  time.sleep(2 ** attempt)
+          assert hashlib.sha256(target.read_bytes()).hexdigest() == row['sha256']
+          PY
+          python scripts/prepare_models.py --download 2> outputs/ci/models.stderr.jsonl | tee outputs/ci/models.json
       - name: Build the Linux amd64 CPU runtime
         run: |
           mkdir -p outputs/ci
@@ -87,19 +107,6 @@ jobs:
           2>&1 | tee outputs/ci/pose_imports.log
       - name: Run the image's offline contract tests
         run: docker run --rm --network none animal-eye-metrology:ci python -m pytest -q -o faulthandler_timeout=15 2>&1 | tee outputs/ci/container-tests.log
-      - name: Prepare the existing development fixture and approved weights
-        run: |
-          mkdir -p weights data outputs
-          cp examples/input_manifest.csv outputs/ci/input_manifest.csv
-          python - <<'PY'
-          import csv, hashlib, pathlib, urllib.request
-          row = next(csv.DictReader(open('examples/input_manifest.csv')))
-          target = pathlib.Path('data') / row['file_name']
-          with urllib.request.urlopen(row['source_url'], timeout=120) as response:
-              target.write_bytes(response.read())
-          assert hashlib.sha256(target.read_bytes()).hexdigest() == row['sha256']
-          PY
-          docker run --rm -v "$PWD/weights:/app/weights" animal-eye-metrology:ci python scripts/prepare_models.py --download | tee outputs/ci/models.json
       - name: Check sources, CPU operators and actual model loading
         run: >-
           docker run --rm --network none -v "$PWD/weights:/app/weights:ro"

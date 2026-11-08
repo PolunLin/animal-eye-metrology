@@ -18,11 +18,11 @@
 | 原始資料／權重／研究產物保護 | 8,023 檔 SHA-256 全部相同，無缺檔 | 本次工作機基線 `/tmp/aem_delivery_audit/protected.json`；不將新增文件當作受保護歷史產物 |
 | CSV 範例 | 原 bytes／SHA-256、6 筆距離公式與 candidate／unverified 核對通過 | 見 [Example](../examples/README.md)，沒有執行模型或新增準確度評估 |
 | 文件 | 新文件本地連結、Markdown fences 檢查通過 | 歷史 README 快照保留根目錄連結語境，不改寫歷史文件 |
-| 最終全套 Pytest／Ruff | 384 passed，54 warnings；Ruff 92 檔通過 | 移除兩個本機 Git 快取選項測試後的最終程式；見下方命令 |
+| 最終全套 Pytest／Ruff | 400 passed，54 warnings；Ruff 92 檔通過 | 含下載重試／備援測試；見下方命令 |
 | 四份平台 lock／重建命令 | 四份鎖定檔、交付檢查及 uv.lock 一致性通過 | 應用與 pose 均實際重建；Linux 容器結果另列 |
 | 全新 macOS app／pose 環境 | 兩套新環境安裝與三模型實際載入通過 | Python 3.11.14；758 個 MMPose 來源檔核對通過 |
-| Linux amd64 Docker 建置 | 首輪建置與兩套環境匯入／CPU ops 通過；最終重跑中 | 首輪容器測試受工作區環境變數影響，已修正測試隔離 |
-| Docker runtime 檢查／模型載入 | 待實際結果 | 檢查來源、版本、權重與實際載入，不等於分割準確度 |
+| Linux amd64 Docker 建置 | 最終程式建置、兩套匯入與 CPU ops、容器內 384 測試通過；下載強化重跑中 | 69d3706 的容器實跑；後續權重下載曾遇 504，見下方紀錄 |
+| Docker runtime 檢查／模型載入 | 待下載強化後的實際結果 | 先前因官方權重下載 504 被跳過，不列為已通過 |
 | UI／API 真實圖片與下載 | API／UI 真實圖片、下載及失敗狀態通過 | 8 筆逐眼、6 筆候選距離；結果仍為 unverified |
 | Linux arm64／GPU／獨立泛化 | 未執行 | 不屬本輪完成聲明 |
 
@@ -62,7 +62,7 @@ docker compose exec ui python scripts/check_runtime.py --config configs/inferenc
 比對來源是原開發 run `20261108T075732Z_92c42f74bb73`；輸入 SHA-256 相同。
 這是環境／程式一致性驗證，不是新增 GT、精度成績或獨立泛化驗收。
 
-本機新環境最終全套為 384 passed、54 warnings、15.00 秒；Ruff lint／format 92 檔通過。
+本機新環境最終全套為 400 passed、54 warnings、14.14 秒；Ruff lint／format 92 檔通過。
 原生 Linux CI 在初次交付 commit `a5823de` 完成 386 passed、54 warnings；之後移除未採用的
 本機 Git sourcecache 功能及其兩個測試，保留官方 HTTPS 來源及套件快取。
 
@@ -90,6 +90,11 @@ Browser plugin not available；使用既有離線 Playwright CLI，未安裝瀏�
 原 COCO 自訂 HTTPS 網域憑證不符合主機名；工程 fixture 改由同一官方 S3 儲存位置的有效 HTTPS
 路徑取得。實取 148,266 bytes，SHA-256 `aeb172b088be9b334a97fcd4df1fe89b5730bc5836765a23c82f2b8b4ff3d03b`，
 與原開發圖片完全相同。沒有停用憑證驗證或換圖。
+
+69d3706 的 Linux 容器內完整測試為 384 passed／54 warnings（33.01 秒）。其後下載權重時
+發生 HTTP 504，實際模型載入與 HTTP smoke 被跳過。已加入有限次重試、逐檔診斷與官方
+固定 asset API 備援，並將圖片／權重準備移到昂貴建置前。原 canonical 與 SHA 保留；
+404 或雜湊不符仍直接失敗，不以其他模型取代。
 
 ## Scientific Limits
 
