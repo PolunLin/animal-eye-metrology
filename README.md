@@ -20,6 +20,39 @@
 | 系統架構圖 | [Architecture](docs/architecture.md) |
 | 模型理由、量測公式與驗證 | [Methodology](docs/methodology.md) |
 
+## Demonstrated Results
+
+COCO 2017 validation `125405` 包含兩隻狗。下圖來自 2026-11-09 實際執行的
+YOLO26s-seg → HRNet-W32／AP-10K → SAM 2.1 Tiny、A_r100 固定流程；
+以保存的原圖與二值遮罩繪製，沒有人工修正預測或使用 GT 引導推論。
+
+**動物實例分割：**不同顏色呈現各動物的預測輪廓，而非以矩形框代替遮罩。
+
+![Two dogs with separate predicted instance contours](examples/demo/animal-contours.png)
+
+**各別眼睛與量測：**放大圖呈現各眼預測遮罩與重心；L／R 是動物自身的解剖側別。
+放大僅供檢視，不增加原圖資訊。量測使用原圖座標，單位為 px。
+
+![Four eye masks, centroids and both requested distance types](examples/demo/eye-measurements.png)
+
+| 量測 | 結果（px，顯示至小數三位） |
+| --- | ---: |
+| animal_0001 雙眼 | 29.845 |
+| animal_0002 雙眼 | 23.706 |
+| animal_0001 與 animal_0002 右眼 | 269.819 |
+
+本次數值與 [既有範例 CSV](examples/measurements.csv) 一致。
+圖檔、來源雜湊及重繪方式見 [範例說明](examples/README.md#demonstration-figures)。
+這是開發圖的流程展示，所有距離仍為 `candidate / unverified`，不代表眼睛側別、可見性或精度已通過驗收。
+
+| 題目任務 | 實作與說明 |
+| --- | --- |
+| COCO 至少兩隻動物 | [示範圖來源與取得方式](#coco-example) |
+| 動物及個別眼睛輪廓 | 上述實際遮罩；UI 可分別檢視與下載 |
+| 每隻雙眼及任意兩隻右眼距離 | 同動物 L/R、跨動物 R/R 無序配對；缺失端點不補零 |
+| 模型、原因及評估公式 | [模型選擇與 IoU／Dice、MAE／RMSE](docs/methodology.md) |
+| 量測方式、公式與驗證 | [遮罩重心與歐氏距離](docs/methodology.md#measurement-and-formula-verification)、[CSV 獨立驗算](examples/README.md#read-and-verify) |
+
 ## Technology Stack
 
 | 部分 | 採用技術與用途 |
@@ -80,6 +113,9 @@ CLI 使用同一流程：
 
 「眼睛標註與審核」頁籤提供 v2 人工輪廓、草稿與審核、版本保存與遮罩下載。
 準備工作區與新增批次見 [Eye Annotation](docs/eye_annotation.md)。頁面不會自動訓練或更換模型。
+這是另需 COCO 標註及圖片的附加工作流程；只執行上傳推論不需先準備標註工作區。
+乾淨下載的專案未包含預設三圖工作區與 proposal CSV，不能直接執行 `--prepare` 而省略來源準備。
+Docker 新增標註批次須先把對應 COCO JSON 放進 `data/coco/annotations/`；專案根目錄 ZIP 不會掛入容器。
 
 ## COCO Example
 
@@ -154,6 +190,29 @@ CI 提供輕量測試與選擇性 CPU 容器檢查；這些工程檢查不代替
 模型準確度需另用人工眼部參考，分開評估 IoU／Dice、重心誤差與兩類距離 MAE／RMSE。
 現有小樣本觀察、公式及驗證界線見 [Methodology](docs/methodology.md)。
 
+## Review and Submission Notes
+
+| 項目 | 評閱方式與範圍 |
+| --- | --- |
+| 程式與版本 | [GitHub repository](https://github.com/PolunLin/animal-eye-metrology)；提交時記錄 commit，確認評閱者有讀取權限。私人儲存庫僅分享網址不足以授權。 |
+| 自動檢查 | [Project checks](https://github.com/PolunLin/animal-eye-metrology/actions/workflows/ci.yml)；查看提交 commit 的狀態。CPU 容器工作為選擇性執行，不能把略過當通過。 |
+| 無需帳號 | 應用無登入流程，不需測試帳號或 AI API key；GitHub 存取權與應用帳號是不同事項。 |
+| 首次啟動 | 需要網路下載固定套件與權重、編譯 MMCV；請預留建置時間。結果圖與範例 CSV 可先離線閱讀。 |
+| 工程驗證 | 測試、模型載入與真圖 smoke 證明流程能執行；不等於模型精度驗收。 |
+| 精度證據 | 目前僅三張開發圖、12 眼的歷史人工參考比較，尚無獨立泛化驗收；詳見下表及方法文件。 |
+
+固定 A_r100 對 v2 人工參考的**歷史開發觀察**：
+
+| Mean IoU | Mean Dice | 雙眼 MAE（px） | 跨右眼 MAE（px） |
+| ---: | ---: | ---: | ---: |
+| 0.522 | 0.617 | 2.008 | 3.383 |
+
+這些是平均值，不是誤差上限；IoU 不是「正確率」。距離標的是眼部遮罩重心，不是瞳孔中心或公分。
+上述評分與本頁單圖重跑是不同紀錄，不把重跑成功稱為重新完成準確度評估。
+公開 [評估摘要](examples/evaluation_summary.csv) 可檢視分母與失敗數，但不含完整人工 GT 與預測遮罩，
+因此不能只靠摘要重算 IoU／Dice／MAE；完整重算需另備相同版本的凍結參考與原預測。
+本頁成果圖也不提供新的 GT。訓練紀錄屬補充實驗，正式推論仍使用固定原始權重。
+
 ## Repository Layout
 
 ```text
@@ -168,7 +227,7 @@ docs/                     API, architecture and methodology
 ```
 
 訓練程式、設定、測試與精簡實驗證據納入公開交付；其他歷史研究與答辯筆記仍保存在 `local_only/`，由 Git 與 Docker 排除。
-資料集、權重、環境及執行產物也不提交。公開版本不依賴本機研究備份。
+資料集、權重、環境及完整執行產物不提交；只附精簡成果圖、CSV 與來源紀錄。公開推論不依賴本機研究備份。
 
 ## License
 
