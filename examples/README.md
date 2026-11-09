@@ -39,6 +39,55 @@ UTF-8 BOM，Python 請以 `utf-8-sig` 讀取。既有 CSV 早於域外標記欄�
 
 此檢查核對 CSV 雜湊、有限端點、兩種配對、候選狀態與歐氏距離公式，不評估分割正確性。
 
+也可只用 Python 標準函式庫獨立驗算，不呼叫專案量測函式或任何模型。從專案根目錄執行：
+
+```sh
+python3.11 - <<'PY'
+import csv
+import math
+from pathlib import Path
+
+with Path("examples/measurements.csv").open(encoding="utf-8-sig", newline="") as handle:
+    rows = list(csv.DictReader(handle))
+assert len(rows) == 3
+assert sum(row["measurement_type"] == "binocular" for row in rows) == 2
+assert sum(row["measurement_type"] == "right_to_right" for row in rows) == 1
+for row in rows:
+    x1, y1, x2, y2 = (float(row[key]) for key in (
+        "cx_a_px", "cy_a_px", "cx_b_px", "cy_b_px"
+    ))
+    calculated = math.hypot(x1 - x2, y1 - y2)
+    assert math.isclose(calculated, float(row["distance_px"]), rel_tol=0, abs_tol=1e-10)
+    print(row["measurement_type"], f"{calculated:.6f} px")
+PY
+```
+
+`1e-10` 是浮點算術檢查的容許差，不是影像量測精度。
+
+## Demonstration Figures
+
+[動物輪廓](demo/animal-contours.png) 與 [四眼放大及距離](demo/eye-measurements.png)
+來自另一筆實際 run `20261109T140429Z_e2ef0383a74c`，程式版本為 `eab6572`。
+這筆 run 在 2026-11-09 完成相同固定模型與 A_r100 流程，2 動物／4 眼／3 距離。
+三筆距離與上方歷史 CSV 相同；歷史 CSV bytes、GT 與模型均未改動。
+
+[來源紀錄](demo/manifest.json) 列出圖片、原始結果與各遮罩 SHA-256，並記錄裁切、放大與繪圖方式。
+圖中的區域邊界來自保存的二值遮罩；重心來自保存的量測結果。圖不是人工修正後的遮罩，
+也不是新增精度評估。Dog 1／Dog 2 分別對應 `animal_0001`／`animal_0002`。
+其中極小或不完整的預測仍原樣展示，不能把非空遮罩當成眼睛正確的證明。
+
+若已有完整來源 run，可用 [重繪腳本](demo/render.py) 重新繪圖。請指定新的輸出目錄，
+不覆寫交付圖或原始推論產物；原 run 不包含於這份精簡圖檔交付。
+
+```sh
+.runtime/app/bin/python examples/demo/render.py \
+  --run outputs/inference/20261109T140429Z_e2ef0383a74c \
+  --output outputs/demo-preview-reproduction
+```
+
+腳本只接受上述固定來源 run，僅繪圖，不執行推論或訓練。字型依系統可用資源選取，
+不同平台圖檔 bytes 可能不同，遮罩與量測數值不因此改變。
+
 ## Recorded Evaluation
 
 [evaluation_summary.csv](evaluation_summary.csv) 保留既有 A_r100 基線對兩版人工參考的單列摘要，原標頭與列 bytes 不變。
