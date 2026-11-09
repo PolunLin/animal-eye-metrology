@@ -40,11 +40,62 @@
 不預填 Reviewer、Accepted 或 Pass。不確定、拒絕與失敗的樣本應保留，不能靜默刪掉改善成績。
 每次保存寫入新 revision；不同視窗同時修改會拒絕過期版本，必須重新載入再人工整合。
 
+## Data Preparation
+
+上傳圖片執行推論只需 README 的模型環境與一張 JPEG／PNG，不需要完整 COCO 或人工標註工作區。
+下列準備只適用於「眼睛標註與審核」；請使用已取得並核對來源的 COCO 原圖與官方實例標註。
+
+| 用途 | 必要資料 |
+| --- | --- |
+| 上傳推論示範 | 自備圖片，或 README 的 COCO `125405` 示範圖 |
+| 新增 val2017 標註批次 | `data/coco/val2017/` 原圖及 `data/coco/annotations/instances_val2017.json` |
+| 新增 train2017 標註批次 | `data/train2017/` 原圖及 `data/coco/annotations/instances_train2017.json` |
+| 預設三圖重標工作區 | `configs/phase1.toml` 指定的 val 原圖／JSON，以及既有 `outputs/phase3/phase3a/proposed_instances.csv` |
+
+新批次會建立自己的 proposal；不需要預設三圖工作區先準備成功。
+只有 README 的一張示範圖不足以建立預設 20 張新批次，且三張既有開發圖會從新批次候選排除。
+請先確認本機資料足夠，再於頁面指定已確認的來源與張數；此步驟不會下載圖片或分配訓練／驗收用途。
+
+若官方標註仍保存在專案根目錄的 `annotations_trainval2017.zip`，可從專案根目錄執行以下命令，
+僅將選定來源的原始 JSON bytes 複製到資料目錄。範例使用 `val2017`；需要 train 時將參數改為 `train2017`。
+目標已存在會拒絕覆寫；已有 JSON 時直接保留並核對來源即可，不必重跑。
+
+```sh
+python3.11 - val2017 <<'PY'
+import hashlib
+import sys
+from pathlib import Path
+from zipfile import ZipFile
+
+split = sys.argv[1]
+if split not in {"val2017", "train2017"}:
+    raise SystemExit("Choose val2017 or train2017.")
+target = Path("data/coco/annotations") / f"instances_{split}.json"
+if target.exists():
+    raise SystemExit(f"Refusing to overwrite: {target}")
+with ZipFile("annotations_trainval2017.zip") as archive:
+    payload = archive.read(f"annotations/instances_{split}.json")
+target.parent.mkdir(parents=True, exist_ok=True)
+with target.open("xb") as handle:
+    handle.write(payload)
+print(f"{target}: SHA-256 {hashlib.sha256(payload).hexdigest()}")
+PY
+```
+
+Docker Compose 只將主機 `data/` 掛載至容器 `/app/data`，不掛載根目錄 ZIP；因此使用 Docker 標註前，
+先在主機完成上述 JSON 準備，並依表格放置原圖。若 `.env` 自訂 `DATA_DIRECTORY`，
+請在該目錄保留相同相對結構。`outputs/` 掛載保存批次與審核修訂。
+這些步驟補齊來源位置；主推論的 Docker smoke 檢查不代表所有人工標註互動均已完成容器驗收。
+
 ## Workspace and New Batches
 
 預設設定 `configs/annotation_workspace.toml` 使用三張既有開發圖（狗／熊／長頸鹿，6 動物／12 眼槽位），
 輸出在獨立的 `outputs/phase3/annotation_workspace_v2_centroid/`，不覆寫原 `eye_annotation_v2` 的凍結標註。
 新工作區從空白人工標註開始，不複製模型輪廓或既有 GT。這批示範圖不自動納入新訓練或獨立驗收。
+
+**乾淨 clone 不包含上述 proposal CSV 或歷史工作區。** 以下 `--prepare` 命令僅適用於已備妥三圖來源與
+既有 proposal 的環境，不能單靠命令重建缺少的來源清單。首次使用可依上節備妥本機資料後，
+使用頁面的「新增標註批次」建立獨立工作區；預設工作區的缺檔提示不會阻止此操作。
 
 ```sh
 .runtime/app/bin/python -m animal_eye_metrology.annotation.annotation_session --config configs/annotation_workspace.toml --prepare
@@ -53,7 +104,7 @@
 
 `--prepare` 拒絕覆寫；已準備的工作區直接開啟或使用 `--status`。
 設定與規範一旦凍結不能原地更改。原圖、來源標註及準備 manifest 皆核對 SHA-256。
-新環境需自行提供已核准的原圖、COCO 實例標註及 proposal CSV；此工具不下載資料。
+使用預設三圖工作區時，需自行提供已核准的原圖、COCO 實例標註及 proposal CSV；此工具不下載資料。
 
 新增批次可直接在頁面操作：展開「新增標註批次：選擇 train／val」，選來源、照片數（1–100）與 Seed，按「建立待標註批次」。
 預設來源 val2017、20 張、seed42；僅按下建立後才抽取。建立後可從「目前標註批次」重新開啟。

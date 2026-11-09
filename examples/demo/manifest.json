@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "source_run_id": "20261109T140429Z_e2ef0383a74c",
+  "source_run_relative_path": "outputs/inference/20261109T140429Z_e2ef0383a74c",
+  "source_code_commit": "eab65727117e5594fcc69165e1435fdc38f152df",
+  "image": {
+    "dataset": "COCO 2017 validation",
+    "image_id": 125405,
+    "width": 640,
+    "height": 428,
+    "source_url": "https://s3.amazonaws.com/images.cocodataset.org/val2017/000000125405.jpg",
+    "role": "existing_development_example"
+  },
+  "condition_id": "A_r100",
+  "models": [
+    "YOLO26s-seg",
+    "HRNet-W32/AP-10K",
+    "SAM 2.1 Tiny"
+  ],
+  "checkpoint_sha256": {
+    "detector_checkpoint_sha256": "3da1d83e31caec96f9300eb4064f4f62882c133c7c264d63dfe61a7c197837a4",
+    "pose_checkpoint_sha256": "18aac840eee49f190e1443d93c6c23784920d2fd90813a42d35c918ec23a36e9",
+    "sam_checkpoint_sha256": "7402e0d864fa82708a20fbd15bc84245c2f26dff0eb43a4b5b93452deb34be69"
+  },
+  "rendering": {
+    "method": "Deterministic Pillow rendering from existing image, binary masks and saved centroids; no AI image generation.",
+    "new_inference_performed": false,
+    "new_accuracy_evaluation_performed": false,
+    "source_masks_modified": false,
+    "body_overlay": "24% color fill; exact inner 4-neighbor binary-mask boundary; no bbox substitutes.",
+    "eye_overlay": "30% color fill; exact inner 4-neighbor binary-mask boundary; no smoothing or hole filling.",
+    "eye_crops": [
+      {
+        "prediction_id": "animal_0001",
+        "eye_side": "left",
+        "crop_xyxy": [
+          268,
+          193,
+          300,
+          225
+        ],
+        "display_scale": 7
+      },
+      {
+        "prediction_id": "animal_0001",
+        "eye_side": "right",
+        "crop_xyxy": [
+          239,
+          186,
+          271,
+          218
+        ],
+        "display_scale": 7
+      },
+      {
+        "prediction_id": "animal_0002",
+        "eye_side": "left",
+        "crop_xyxy": [
+          493,
+          45,
+          525,
+          77
+        ],
+        "display_scale": 7
+      },
+      {
+        "prediction_id": "animal_0002",
+        "eye_side": "right",
+        "crop_xyxy": [
+          469,
+          44,
+          501,
+          76
+        ],
+        "display_scale": 7
+      }
+    ],
+    "eye_resize": "nearest-neighbor 7x",
+    "distance_display_decimals": 3,
+    "centroid_coordinate_convention": "Original image outer top-left is (0,0); pixel centers are (column+0.5,row+0.5).",
+    "renderer_sha256": "126f1472c8212126819311ba9722ec787cd0cc24fb75fdb84a0781fc06ad12e7",
+    "font_family": [
+      "Arial",
+      "Regular"
+    ],
+    "software": {
+      "Pillow": "12.3.0",
+      "numpy": "2.4.6"
+    }
+  },
+  "measurements": [
+    {
+      "condition_id": "A_r100",
+      "measurement_type": "binocular",
+      "distance_px": 29.845425565305202,
+      "status": "candidate",
+      "qualification": "unverified",
+      "units": "px",
+      "experimental": false,
+      "prediction_id_a": "animal_0001",
+      "eye_side_a": "left",
+      "pose_domain_a": "ap10k_mammal_mapping",
+      "cx_a_px": 284.94444444444446,
+      "cy_a_px": 209.38888888888889,
+      "prediction_id_b": "animal_0001",
+      "eye_side_b": "right",
+      "pose_domain_b": "ap10k_mammal_mapping",
+      "cx_b_px": 255.93859649122808,
+      "cy_b_px": 202.359649122807,
+      "reason": ""
+    },
+    {
+      "condition_id": "A_r100",
+      "measurement_type": "binocular",
+      "distance_px": 23.70598798730454,
+      "status": "candidate",
+      "qualification": "unverified",
+      "units": "px",
+      "experimental": false,
+      "prediction_id_a": "animal_0002",
+      "eye_side_a": "left",
+      "pose_domain_a": "ap10k_mammal_mapping",
+      "cx_a_px": 509.36861313868616,
+      "cy_a_px": 61.01094890510949,
+      "prediction_id_b": "animal_0002",
+      "eye_side_b": "right",
+      "pose_domain_b": "ap10k_mammal_mapping",
+      "cx_b_px": 485.66326530612247,
+      "cy_b_px": 60.83673469387755,
+      "reason": ""
+    },
+    {
+      "condition_id": "A_r100",
+      "measurement_type": "right_to_right",
+      "distance_px": 269.81875170301083,
+      "status": "candidate",
+      "qualification": "unverified",
+      "units": "px",
+      "experimental": false,
+      "prediction_id_a": "animal_0001",
+      "eye_side_a": "right",
+      "pose_domain_a": "ap10k_mammal_mapping",
+      "cx_a_px": 255.93859649122808,
+      "cy_a_px": 202.359649122807,
+      "prediction_id_b": "animal_0002",
+      "eye_side_b": "right",
+      "pose_domain_b": "ap10k_mammal_mapping",
+      "cx_b_px": 485.66326530612247,
+      "cy_b_px": 60.83673469387755,
+      "reason": ""
+    }
+  ],
+  "qualification": "candidate / unverified",
+  "limitations": [
+    "Image-plane pixel distances, not pupil or physical distances.",
+    "Model side assignment, visibility and mask correctness unverified.",
+    "This development illustration is not an independent accuracy result.",
+    "Source run files are identified by hashes but are not all included in this lightweight preview."
+  ],
+  "source_files": [
+    {
+      "path": "result.json",
+      "sha256": "5c3e37098420b1fbc893e75d5a9732cf3c84cbb5ab3af18e079f22304b89e3fa"
+    },
+    {
+      "path": "run_manifest.json",
+      "sha256": "eb426b949c6eca579d9b9e834c7965573026be36b3f1ecdea41290e9b4972fd1"
+    },
+    {
+      "path": "input/original.jpg",
+      "sha256": "aeb172b088be9b334a97fcd4df1fe89b5730bc5836765a23c82f2b8b4ff3d03b"
+    },
+    {
+      "path": "input/image.png",
+      "sha256": "9ad67cdce7ed1ede9ec5e7a19c9d9dfb863c20909210774b52a17232da06a5bf"
+    },
+    {
+      "path": "measurements.csv",
+      "sha256": "690fb474a24e929f9a24e7b1cd140c9a0de68432cf3509df01f98b355414b2eb"
+    },
+    {
+      "path": "animal_masks/animal_0001.png",
+      "sha256": "60b258211317178764346ad85e0863462da8c7b334a61545dc8049a9c9baa359"
+    },
+    {
+      "path": "animal_masks/animal_0002.png",
+      "sha256": "b1c5edaf8a76ce1dcf09364f46096e07f99cda2dd67220a8d54c04325c849a8f"
+    },
+    {
+      "path": "eye_masks/animal_0001_left_A_r100.png",
+      "sha256": "e8a026c43abea14ab31639b096d940e3ae25792e971af3899c87fdc85be66803"
+    },
+    {
+      "path": "eye_masks/animal_0001_right_A_r100.png",
+      "sha256": "cc2c5341bcf96aa63445b84ae5b081eb5925df54829e98feec475ab953e8859d"
+    },
+    {
+      "path": "eye_masks/animal_0002_left_A_r100.png",
+      "sha256": "0e238bdbb09638c56e8e9e276c47bd500300c004c99ec6fa77d5db7fe541f5d8"
+    },
+    {
+      "path": "eye_masks/animal_0002_right_A_r100.png",
+      "sha256": "d39c7d73e7f40ac0559f86d5fb1a7d7f90b13ef23b2397d42d8e790336f71cb3"
+    }
+  ],
+  "figures": [
+    {
+      "file": "animal-contours.png",
+      "sha256": "c930eb88d2034b74dd97365d915a116fca85c1cfce6cdc8ad0a23acdaa46e6e6",
+      "bytes": 725401
+    },
+    {
+      "file": "eye-measurements.png",
+      "sha256": "75e0acd3370b3de98a294ff7a6966a242accf12ca2ba03506e396751d119c493",
+      "bytes": 82361
+    }
+  ]
+}
