@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import fcntl
 import hashlib
 import json
 import os
@@ -27,6 +28,20 @@ def create_batch(root: Path, split: str, count: int, seed: int = 42) -> Path:
         raise Phase1Error("來源須為 train2017／val2017，批次大小須為 1–100 張。")
     if type(seed) is not int or not 0 <= seed <= 2**32 - 1:
         raise Phase1Error("Seed 必須為 0–4294967295 的整數。")
+    lock_directory = root / "outputs/phase3"
+    lock_directory.mkdir(parents=True, exist_ok=True)
+    # All source splits share duplicate hashes. Keep this inode after releasing the lock
+    # so every process serializes its source snapshot, selection and publication.
+    with (lock_directory / ".eye_annotation_batches.lock").open("a") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            return _create_batch(root, split, count, seed)
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
+def _create_batch(root: Path, split: str, count: int, seed: int) -> Path:
+    """Select and publish a batch while holding the shared batch-creation lock."""
     source_file = root / f"data/coco/annotations/instances_{split}.json"
     image_root = root / ("data/train2017" if split == "train2017" else "data/coco/val2017")
     archive = root / "annotations_trainval2017.zip"
@@ -173,7 +188,7 @@ def create_batch(root: Path, split: str, count: int, seed: int = 42) -> Path:
     }
     # Publish discovery marker only after the session is fully prepared.
     prepare(read_session(config))
-    (directory / "batch_manifest.json").write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
-    )
+    pending_manifest = directory / ".batch_manifest.json.tmp"
+    pending_manifest.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+    pending_manifest.replace(directory / "batch_manifest.json")
     return config

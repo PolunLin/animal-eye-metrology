@@ -7,6 +7,44 @@
 距離是原圖上的**眼部遮罩重心距離（px）**，不是瞳孔距離或公分。
 新圖結果標記 `candidate / unverified`；沒有人工參考時不產生準確率或誤差。
 
+## Reviewed Validation Results
+
+2026-11-10 固定目前已保存的 v2 人工審核，對 **26 張 COCO 多動物照片**重新執行原模型與 A_r100。
+其中 **16 張、42 眼**符合量測參考條件；其餘眼睛的模糊、遮擋、未審核等狀態完整保留。
+
+![本次人工審核開發驗證：覆蓋率、分割重疊與距離誤差](examples/reviewed_validation/overview.png)
+
+| 評估項目 | 本次結果 | 分母／可計算數 |
+| --- | ---: | --- |
+| 眼睛 Mean IoU／Dice | **0.540／0.584** | 42 眼，含 2 眼無法配對而記 0 |
+| 平均遮罩重心誤差 | **3.683 px** | 40／42 眼可計算 |
+| 同隻動物雙眼 MAE／RMSE | **4.665／9.769 px** | 13／13 組，來自 8 張圖 |
+| 不同動物右眼 MAE／RMSE | **3.576／4.783 px** | 16／16 組，來自 7 張圖 |
+
+**單隻貓：眼部輪廓與雙眼距離**
+
+![單隻橘貓：原圖、審核參考與模型眼部遮罩](examples/reviewed_validation/eye_examples.png)
+
+展示選用 COCO `555705` 左側橘貓（動物 `49839`）：雙眼距離參考與預測皆為 **45.142 px**，
+與本次審核參考的差為 **0 px**。本例審核後的輪廓與既有預測相同，作為流程展示；整體表現以上表完整驗證為準。
+
+**兩隻貓：完整動物輪廓、眼部遮罩與跨動物距離**
+
+![兩隻貓完整畫面：動物與眼部分割、各自雙眼及跨右眼距離](examples/reviewed_validation/two_cats.png)
+
+同張 COCO `555705` 圖片展示橘貓與虎斑貓，量測均使用原圖眼部遮罩重心：
+
+| 量測 | 模型距離 |
+| --- | ---: |
+| 橘貓雙眼 | 45.142 px |
+| 虎斑貓雙眼 | 52.430 px |
+| 兩隻貓的右眼 | 111.884 px |
+
+這是**人工審核的小樣本開發驗證**，部分參考已有模型預測曝光，不能當作獨立泛化準確度。
+雙眼距離最大誤差達 **30.754 px**；距離算得出來不代表量測合格。跨右眼 16 組中有 10 組來自同一張圖，配對並非獨立樣本。
+[完整結果、逐眼／逐距離 CSV 與重現步驟](examples/reviewed_validation/README.md) 保留失敗與排除分母；
+原本三張示範圖的歷史結果另列於 [Methodology](docs/methodology.md#recorded-observations)，不混合比較。
+
 ## Assignment Deliverables
 
 | 要求 | 交付位置 |
@@ -187,8 +225,9 @@ CI 提供輕量測試與選擇性 CPU 容器檢查；這些工程檢查不代替
   --image data/000000125405.jpg --report outputs/api_smoke.json
 ```
 
-模型準確度需另用人工眼部參考，分開評估 IoU／Dice、重心誤差與兩類距離 MAE／RMSE。
-現有小樣本觀察、公式及驗證界線見 [Methodology](docs/methodology.md)。
+本次已用固定人工審核參考分開計算 IoU／Dice、重心誤差與兩類距離 MAE／RMSE。
+可直接[重播保存的驗證結果](examples/reviewed_validation/README.md#replay-scores)，不需模型或原圖。
+公式及驗證界線見 [Methodology](docs/methodology.md)。
 
 ## Review and Submission Notes
 
@@ -199,7 +238,7 @@ CI 提供輕量測試與選擇性 CPU 容器檢查；這些工程檢查不代替
 | 無需帳號 | 應用無登入流程，不需測試帳號或 AI API key；GitHub 存取權與應用帳號是不同事項。 |
 | 首次啟動 | 需要網路下載固定套件與權重、編譯 MMCV；請預留建置時間。結果圖與範例 CSV 可先離線閱讀。 |
 | 工程驗證 | 測試、模型載入與真圖 smoke 證明流程能執行；不等於模型精度驗收。 |
-| 精度證據 | 目前僅三張開發圖、12 眼的歷史人工參考比較，尚無獨立泛化驗收；詳見下表及方法文件。 |
+| 精度證據 | 本次 26 張開發圖、42 個合格參考眼睛的驗證見本頁開頭；另保留三張開發圖、12 眼的歷史比較。兩批皆非獨立泛化驗收。 |
 
 固定 A_r100 對 v2 人工參考的**歷史開發觀察**：
 
@@ -208,10 +247,10 @@ CI 提供輕量測試與選擇性 CPU 容器檢查；這些工程檢查不代替
 | 0.522 | 0.617 | 2.008 | 3.383 |
 
 這些是平均值，不是誤差上限；IoU 不是「正確率」。距離標的是眼部遮罩重心，不是瞳孔中心或公分。
-上述評分與本頁單圖重跑是不同紀錄，不把重跑成功稱為重新完成準確度評估。
-公開 [評估摘要](examples/evaluation_summary.csv) 可檢視分母與失敗數，但不含完整人工 GT 與預測遮罩，
-因此不能只靠摘要重算 IoU／Dice／MAE；完整重算需另備相同版本的凍結參考與原預測。
-本頁成果圖也不提供新的 GT。訓練紀錄屬補充實驗，正式推論仍使用固定原始權重。
+上述歷史評分、本頁單圖展示與本次 26 圖開發驗證是不同紀錄，不混合比較或據此宣稱模型進步。
+歷史 [評估摘要](examples/evaluation_summary.csv) 不含完整人工 GT 與預測遮罩，完整重算需另備原始證據；
+本次 [26 圖驗證包](examples/reviewed_validation/README.md#replay-scores) 則提供無損參考／預測遮罩，可直接重播評分。
+訓練紀錄屬補充實驗，正式推論仍使用固定原始權重；選型與保留基線的理由見 [Methodology](docs/methodology.md#model-choice)。
 
 ## Repository Layout
 
@@ -222,12 +261,12 @@ configs/                  Local / Docker inference and pinned model configuratio
 requirements/             Application / pose dependencies and platform locks
 scripts/                  Environment, model, runtime and delivery checks
 tests/                    Final pipeline contract and geometry tests
-examples/                 Recorded baseline CSV and input provenance
+examples/                 Baseline and reviewed validation evidence, CSV and provenance
 docs/                     API, architecture and methodology
 ```
 
 訓練程式、設定、測試與精簡實驗證據納入公開交付；其他歷史研究與答辯筆記仍保存在 `local_only/`，由 Git 與 Docker 排除。
-資料集、權重、環境及完整執行產物不提交；只附精簡成果圖、CSV 與來源紀錄。公開推論不依賴本機研究備份。
+完整資料集、權重、環境及原始執行產物不提交；`examples/` 保留精簡成果圖、CSV、來源紀錄及可重播評分的參考／預測遮罩。公開推論與保存評分重播不依賴本機研究備份。
 
 ## License
 

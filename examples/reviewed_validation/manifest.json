@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "description": "Frozen reviewed development evaluation; exact RLE and CSV evidence; no independent blind-test claim.",
+  "files_sha256": {
+    "README.md": "a0828662bec6b5a3b6e46668fefa23562cd0e807cae633a968031f4bf48184c4",
+    "by_category.json": "28e5ca21fd765dc9d82a9e8315ddeeeaa43f55f276bc77dfdbcc3a78c223b848",
+    "eye_examples.png": "639f88cde11316b32d2133acf4081adddf2fcc08d85c91f24dfcd75b3887e131",
+    "images.csv": "a9482d6ae15567cf015792eec0a947b1a3be21f8334160b2c68200f833727256",
+    "independent_audit.json": "c7b0549d4503797a92f724a095e6ad54fa2ce0727e6713d1934263105a341bb0",
+    "matches.csv": "11f59c2e1712f41dd163495269151278084c16cdc6c650ccdcd926e086615db0",
+    "measurements.csv": "b42713d7d4aea0997163326c843419b5575d8785292853df007c08df6172e510",
+    "overview.png": "c109fff744ae5488a724b642058e1a9952e9ed79bf9015c98582d4f87b5d2064",
+    "per_eye.csv": "4527557119aef6ed770d53a3c7597884b56bd8bb02055b6e60f0fc11a60aa62c",
+    "predictions.json": "18948c50f6215edbb2e8cb882a8d3cfc02d02074d62a48d973b3c2fc3e70aa17",
+    "reference.json": "9eba6d91fac7fbd672709dafacfb5da547d617ef3157764e5b04c862c66409b1",
+    "reviews.csv": "2d43e037e277e7968a5083b5cfd879071b3be18f2876febdb116283a5477e367",
+    "run_manifest.json": "2abcd3ba1cf5d2d8435ce9543355408f6bdb71b5c793bf3fb744b03974e4e69f",
+    "summary.json": "2bd89c8d4311a7c2496e7858766e283fce0ec95f8f0dce6367fd9fb5e0de161e",
+    "two_cats.png": "3fb710c3659bcc18f13ff06ffd06edc00194e6d0e56f0bc70b6b49d85412d394"
+  },
+  "replay_source_sha256": {
+    "scripts/evaluate_reviewed.py": "5aa3a7b496fb52f2cd1cb192a119a6b9c25729b689cb7a62b88eabada87cd7cd",
+    "scripts/plot_reviewed_validation.py": "a36ed41c362f7e607d2699aea4955244ea814798534bedf9244606ee3969a67a",
+    "src/animal_eye_metrology/annotation/reviewed_snapshot.py": "784d6e829c4e786b0dc5ce5a333d373667115f6c56c427aea598702f32297a4e",
+    "src/animal_eye_metrology/measurement/reviewed_evaluation.py": "9fef0754f765e192d90f20227809362bf0aa917efc5a854e936a6f4bb17a5735",
+    "src/animal_eye_metrology/measurement/metrology.py": "a439e448fa885bfcbd0c8ad13f2d47871be5a5a801f30deb5450917c261c956c"
+  }
+}

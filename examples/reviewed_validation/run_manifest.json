@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "created_at_utc": "2026-11-09T17:26:03.086483+00:00",
+  "reference_sha256": "9eba6d91fac7fbd672709dafacfb5da547d617ef3157764e5b04c862c66409b1",
+  "baseline": "A_r100",
+  "device": "cpu",
+  "seed": 42,
+  "threads": 4,
+  "config_sha256": "6784c57042b83b36e3a56bcc0e0872cd012c334edc6e7e5ab0079f2bf89b3eb9",
+  "model_sha256": {
+    "detector_checkpoint": "3da1d83e31caec96f9300eb4064f4f62882c133c7c264d63dfe61a7c197837a4",
+    "pose_checkpoint": "18aac840eee49f190e1443d93c6c23784920d2fd90813a42d35c918ec23a36e9",
+    "sam_checkpoint": "7402e0d864fa82708a20fbd15bc84245c2f26dff0eb43a4b5b93452deb34be69"
+  },
+  "protected_sha256_before": {
+    "configs/inference.runtime.toml": "6784c57042b83b36e3a56bcc0e0872cd012c334edc6e7e5ab0079f2bf89b3eb9",
+    "configs/eye_pose_source_manifest.json": "a7c1c2c22a27278315d21397d334c4096bce2c5d60e4ae1c72ceb614b67a23ec",
+    "configs/sam2_runtime.toml": "4a498b9af32977ce02e40d246ca9be89f23b6b04cbde0f6082a612c9be9811af",
+    "weights/yolo26s-seg.pt": "3da1d83e31caec96f9300eb4064f4f62882c133c7c264d63dfe61a7c197837a4",
+    "weights/eye_pose/hrnet_w32_ap10k_256x256-18aac840_20211029.pth": "18aac840eee49f190e1443d93c6c23784920d2fd90813a42d35c918ec23a36e9",
+    "weights/eye_poc/sam2.1_hiera_tiny.pt": "7402e0d864fa82708a20fbd15bc84245c2f26dff0eb43a4b5b93452deb34be69",
+    "src/animal_eye_metrology/inference/__init__.py": "037c30884f1e9a5104ca0402479c0181cbfd7e5052b7d26a1ce6b71a17f31827",
+    "src/animal_eye_metrology/inference/eye_pose_worker.py": "14949f832c303d5f4648953504b33a0a863450d24a51b40c64e27dd9f7f946b4",
+    "src/animal_eye_metrology/inference/inference_artifacts.py": "8f21819ab8ca5834c00e7a4bdb350108a6b738b05af8e78bda36165c8bdc11ba",
+    "src/animal_eye_metrology/inference/inference_capabilities.py": "14a00d8517b59870958427c77ab8333354d524b6449662f38473a472c1f35dbe",
+    "src/animal_eye_metrology/inference/inference_pipeline.py": "fca963b2aa2a5f9f8dd60aa9adb7c3ead32b061906de5f1f61724e63154ec279",
+    "src/animal_eye_metrology/inference/inference_worker.py": "226c9425c4241a1f7938197512e9aadcfacbadded7096729599f6c28882a881c",
+    "src/animal_eye_metrology/models/__init__.py": "cd2a244e3e01f55f868e44c7746c22243400ce2d390a772658853b5651a88ff9",
+    "src/animal_eye_metrology/models/sam_runtime.py": "e9ba79d0bbeaf708573babb766d09aa1bc901929e204d6d71f2cf9dabd646482",
+    "src/animal_eye_metrology/models/segmentation.py": "e6fbcd7fc5a02b1e1fa503d4fe307cc337fc5dc87e5b9986f9bd50e71e56ef8b",
+    "src/animal_eye_metrology/models/training_yolo.py": "bf1b3bed164b3964a42e60331decf59121b97cb3322c4f0434a89af01753780b",
+    "src/animal_eye_metrology/measurement/metrology.py": "a439e448fa885bfcbd0c8ad13f2d47871be5a5a801f30deb5450917c261c956c",
+    "src/animal_eye_metrology/measurement/eye_geometry.py": "0adf9cd17168660c126095d8ddbf25ebc2929d204e76c301cbfcf39d42e5706b"
+  },
+  "images": [
+    {
+      "image_id": 125405,
+      "run": "outputs/inference/20261109T172603Z_6bc4045efa82",
+      "status": "completed",
+      "result_sha256": "5cc12f1463ffb77fe2e5bd6286caa433f08ce3edc41b1677aaa42871988b8489"
+    },
+    {
+      "image_id": 20247,
+      "run": "outputs/inference/20261109T172614Z_967e14fda618",
+      "status": "completed",
+      "result_sha256": "07c34a944d059cf47633f34c97e6ff9c18396c862c8ea96410b02cfa401fac39"
+    },
+    {
+      "image_id": 57027,
+      "run": "outputs/inference/20261109T172621Z_b39700c38cf6",
+      "status": "completed",
+      "result_sha256": "d2c7fd59aeca49e8f50a1e8a67be55e72586a8d40ede69af229cbd54c0b790c0"
+    },
+    {
+      "image_id": 382111,
+      "run": "outputs/inference/20261109T172630Z_ca2151741bbf",
+      "status": "completed",
+      "result_sha256": "7ca4ae89ba69b5817f1eb13bb1700761629d746fc6f5cf5b7c2dd26dd15bb4f1"
+    },
+    {
+      "image_id": 481480,
+      "run": "outputs/inference/20261109T172637Z_dccf0aa37a16",
+      "status": "completed",
+      "result_sha256": "21427c048908811f6a81faf8accecc1dcaf6d030053f6ccf112e959b31d1dff0"
+    },
+    {
+      "image_id": 186345,
+      "run": "outputs/inference/20261109T172645Z_f7164630dd55",
+      "status": "no_animals",
+      "result_sha256": "e22d8c85d7a0979b697f1376b7e6daa884eea09d7c443091e4808b992a4c5fd7"
+    },
+    {
+      "image_id": 113354,
+      "run": "outputs/inference/20261109T172647Z_4fa909a6bff7",
+      "status": "completed",
+      "result_sha256": "fc4f3d28cc4c3c6b419f517e29d0984d8d20f817aad85988617270047e46a66b"
+    },
+    {
+      "image_id": 276024,
+      "run": "outputs/inference/20261109T172654Z_c956bff78ccb",
+      "status": "completed",
+      "result_sha256": "b5f38e0875f668995657dee404b0f43e5296f3a7bb2af13f2f962e5f80786c46"
+    },
+    {
+      "image_id": 305695,
+      "run": "outputs/inference/20261109T172702Z_5d155af7b310",
+      "status": "completed_with_issues",
+      "result_sha256": "ce2e38860d4de1f3748991bf95ccc8b3a3822bbcd52131290114d2e03aa73e21"
+    },
+    {
+      "image_id": 240754,
+      "run": "outputs/inference/20261109T172710Z_6c1002acea17",
+      "status": "completed_with_issues",
+      "result_sha256": "bdd06bff870dcc1aa2b36d8b0ba0af8fc263b6823f28399c9f5cfeba2c494b59"
+    },
+    {
+      "image_id": 395388,
+      "run": "outputs/inference/20261109T172717Z_7d71adf1cb9f",
+      "status": "no_animals",
+      "result_sha256": "ec603a3e1f676c69e568aedbcf803c3389e56f0b43ca2582f10b9a6f38058cda"
+    },
+    {
+      "image_id": 267169,
+      "run": "outputs/inference/20261109T172719Z_33f397e91cab",
+      "status": "completed",
+      "result_sha256": "a339a60f8cc3e15eab31b5c828d12ab178af51b2ad392b1dea434759fe398c71"
+    },
+    {
+      "image_id": 546823,
+      "run": "outputs/inference/20261109T172725Z_30e5abe66f41",
+      "status": "completed",
+      "result_sha256": "db73618a9587c338744bdca5ee39ab6776070d8ff2987bdd7649fe337e3ac462"
+    },
+    {
+      "image_id": 552371,
+      "run": "outputs/inference/20261109T172733Z_3131485fb1d0",
+      "status": "completed",
+      "result_sha256": "a542d3c2a9316c7e3583357749e6dc33ab7531005db0823dede3c7056d70953b"
+    },
+    {
+      "image_id": 70774,
+      "run": "outputs/inference/20261109T172740Z_9526fb5eb7f2",
+      "status": "no_animals",
+      "result_sha256": "7f254f552ace2d98b1a72c3e9946481bc73b00a9851e258206d69e942fea7087"
+    },
+    {
+      "image_id": 555705,
+      "run": "outputs/inference/20261109T172741Z_cf68561a8bae",
+      "status": "completed",
+      "result_sha256": "c33e0dd781b379e58c14e14ea11042cdf502d9b5bc09a7e0255b8152c94627fc"
+    },
+    {
+      "image_id": 218424,
+      "run": "outputs/inference/20261109T172749Z_eb6949d9a825",
+      "status": "completed",
+      "result_sha256": "876b52ebfc3d7409c201d81533221472050b14307533302cad7d3e06ba199d84"
+    },
+    {
+      "image_id": 439180,
+      "run": "outputs/inference/20261109T172757Z_72f7a3e7a876",
+      "status": "completed",
+      "result_sha256": "1bf78941ab27337264e5b39b0b60e1692ff05f61ac8ceea4e5d779201909db08"
+    },
+    {
+      "image_id": 375278,
+      "run": "outputs/inference/20261109T172810Z_d394c11b67ae",
+      "status": "completed",
+      "result_sha256": "bc8019973f592f128ac056194595ee9dd2fb4f2dcc8eca0b6fcd287415835ecd"
+    },
+    {
+      "image_id": 514979,
+      "run": "outputs/inference/20261109T172817Z_3c8f48b1639a",
+      "status": "completed",
+      "result_sha256": "ff24aae07a192153042651d20c9168dd3224fadf0811b481e46ae48c27112833"
+    },
+    {
+      "image_id": 89880,
+      "run": "outputs/inference/20261109T172824Z_93599e430c9f",
+      "status": "completed",
+      "result_sha256": "01b904e381ac62989061c6a682902c0aa74f931e3c5ee70157aa706669487c32"
+    },
+    {
+      "image_id": 25139,
+      "run": "outputs/inference/20261109T172832Z_69ea978ab67a",
+      "status": "completed",
+      "result_sha256": "b2d06f5bd0dbc14c5c9b1b934e42535ced050fd0b94c0d0987d4436693cb5c9d"
+    },
+    {
+      "image_id": 338304,
+      "run": "outputs/inference/20261109T172839Z_51195692ffa0",
+      "status": "completed",
+      "result_sha256": "df7c389e1be25997dfee00a6347f3a325e371c8e14bee5c0a94449a0ffa0677b"
+    },
+    {
+      "image_id": 148783,
+      "run": "outputs/inference/20261109T172847Z_cff263b41e5f",
+      "status": "completed",
+      "result_sha256": "b02be3f6da354f1faf2c7820c97e55c3c0e83a9edb446249ebde295f3a5b98ee"
+    },
+    {
+      "image_id": 454798,
+      "run": "outputs/inference/20261109T172854Z_e91b60a6a43a",
+      "status": "completed",
+      "result_sha256": "6743553f0e34125fba27f917b5abdc467dd27e1442eed74a1e3b9d196ece2e71"
+    },
+    {
+      "image_id": 389451,
+      "run": "outputs/inference/20261109T172901Z_925fa90143ff",
+      "status": "completed",
+      "result_sha256": "56432f888175649b0c071f278e74fc9fae331a6e7fbc07beb87c02831c94a32f"
+    }
+  ],
+  "fresh_inference": true,
+  "reference_used_as_model_input": false,
+  "protected_sha256_after": {
+    "configs/inference.runtime.toml": "6784c57042b83b36e3a56bcc0e0872cd012c334edc6e7e5ab0079f2bf89b3eb9",
+    "configs/eye_pose_source_manifest.json": "a7c1c2c22a27278315d21397d334c4096bce2c5d60e4ae1c72ceb614b67a23ec",
+    "configs/sam2_runtime.toml": "4a498b9af32977ce02e40d246ca9be89f23b6b04cbde0f6082a612c9be9811af",
+    "weights/yolo26s-seg.pt": "3da1d83e31caec96f9300eb4064f4f62882c133c7c264d63dfe61a7c197837a4",
+    "weights/eye_pose/hrnet_w32_ap10k_256x256-18aac840_20211029.pth": "18aac840eee49f190e1443d93c6c23784920d2fd90813a42d35c918ec23a36e9",
+    "weights/eye_poc/sam2.1_hiera_tiny.pt": "7402e0d864fa82708a20fbd15bc84245c2f26dff0eb43a4b5b93452deb34be69",
+    "src/animal_eye_metrology/inference/__init__.py": "037c30884f1e9a5104ca0402479c0181cbfd7e5052b7d26a1ce6b71a17f31827",
+    "src/animal_eye_metrology/inference/eye_pose_worker.py": "14949f832c303d5f4648953504b33a0a863450d24a51b40c64e27dd9f7f946b4",
+    "src/animal_eye_metrology/inference/inference_artifacts.py": "8f21819ab8ca5834c00e7a4bdb350108a6b738b05af8e78bda36165c8bdc11ba",
+    "src/animal_eye_metrology/inference/inference_capabilities.py": "14a00d8517b59870958427c77ab8333354d524b6449662f38473a472c1f35dbe",
+    "src/animal_eye_metrology/inference/inference_pipeline.py": "fca963b2aa2a5f9f8dd60aa9adb7c3ead32b061906de5f1f61724e63154ec279",
+    "src/animal_eye_metrology/inference/inference_worker.py": "226c9425c4241a1f7938197512e9aadcfacbadded7096729599f6c28882a881c",
+    "src/animal_eye_metrology/models/__init__.py": "cd2a244e3e01f55f868e44c7746c22243400ce2d390a772658853b5651a88ff9",
+    "src/animal_eye_metrology/models/sam_runtime.py": "e9ba79d0bbeaf708573babb766d09aa1bc901929e204d6d71f2cf9dabd646482",
+    "src/animal_eye_metrology/models/segmentation.py": "e6fbcd7fc5a02b1e1fa503d4fe307cc337fc5dc87e5b9986f9bd50e71e56ef8b",
+    "src/animal_eye_metrology/models/training_yolo.py": "bf1b3bed164b3964a42e60331decf59121b97cb3322c4f0434a89af01753780b",
+    "src/animal_eye_metrology/measurement/metrology.py": "a439e448fa885bfcbd0c8ad13f2d47871be5a5a801f30deb5450917c261c956c",
+    "src/animal_eye_metrology/measurement/eye_geometry.py": "0adf9cd17168660c126095d8ddbf25ebc2929d204e76c301cbfcf39d42e5706b"
+  },
+  "models_and_inference_unchanged": true,
+  "reference_sources_unchanged": true,
+  "changed_reference_sources": [],
+  "finished_at_utc": "2026-11-09T17:29:11.128598+00:00",
+  "predictions_sha256": "18948c50f6215edbb2e8cb882a8d3cfc02d02074d62a48d973b3c2fc3e70aa17"
+}

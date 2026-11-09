@@ -48,5 +48,6 @@ curl --fail-with-body "http://127.0.0.1:8000/runs/<run_id>/artifacts/measurement
 | 500／503 | 產物或執行錯誤／環境與權重未就緒 |
 
 只接受靜態 JPEG／PNG，預設 20 MiB／1,200 萬像素；套用 EXIF、RGB 正規化，不縮放原圖。
+PNG 每通道位元深度須為 8-bit 或以下；16-bit PNG 回傳 400，不會自動截斷或縮放色階。
 每個模型子程序有 timeout；同步 API 沒有工作佇列，客戶端斷線不等於取消執行。
 部署與真實 HTTP smoke 指令見 [README](../README.md#validation)。
