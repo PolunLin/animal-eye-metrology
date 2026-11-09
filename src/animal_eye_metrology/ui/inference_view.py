@@ -554,7 +554,10 @@ def inference_workspace(root: Path) -> None:
         type=["jpg", "jpeg", "png"],
         accept_multiple_files=False,
         max_upload_size=max(1, config.get("max_upload_bytes", 20 * 1024 * 1024) // (1024 * 1024)),
-        help="單張圖片；依 EXIF 校正方向，轉為 RGB，透明背景合成白色，保留原圖解析度。",
+        help=(
+            "單張圖片；PNG 須為 8-bit 或以下，16-bit PNG 不支援。"
+            "依 EXIF 校正方向，轉為 RGB，透明背景合成白色，保留原圖解析度。"
+        ),
         key="inference_upload",
     )
     st.caption(

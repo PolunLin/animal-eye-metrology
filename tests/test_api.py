@@ -106,6 +106,19 @@ def test_dimensions_are_checked_from_content_and_default_condition_is_fixed(api_
     assert cfg["test_calls"][0][3] == ("A_r100",)
 
 
+def test_high_bit_depth_png_returns_400_without_inference_or_artifacts(
+    api_client, high_bit_depth_png: bytes
+) -> None:
+    _, client, cfg = api_client
+    response = client.post(
+        "/predict", files={"file": ("synthetic.png", high_bit_depth_png, "image/png")}
+    )
+    assert response.status_code == 400
+    assert "16-bit PNG" in response.json()["detail"]
+    assert cfg["test_calls"] == []
+    assert not cfg["output_directory"].exists()
+
+
 def test_missing_runtime_reports_not_ready_without_model_call(api_client, monkeypatch) -> None:
     _, client, cfg = api_client
     monkeypatch.setattr(

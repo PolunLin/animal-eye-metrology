@@ -3,10 +3,35 @@
 import json
 import os
 import socket
+import struct
+import zlib
 from pathlib import Path
 from typing import Any
 
 import pytest
+
+
+@pytest.fixture(params=[(0, 1), (2, 3), (4, 2), (6, 4)], ids=["gray", "rgb", "gray-alpha", "rgba"])
+def high_bit_depth_png(request: pytest.FixtureRequest) -> bytes:
+    """Encode valid synthetic 16-bit PNGs, including modes Pillow cannot write losslessly."""
+    color_type, channels = request.param
+
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload))
+        )
+
+    samples = [0, 128, 256, 32768, 65535]
+    scanline = b"\x00" + b"".join(struct.pack(">H", value) * channels for value in samples)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBBBBB", len(samples), 1, 16, color_type, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(scanline))
+        + chunk(b"IEND", b"")
+    )
 
 
 @pytest.fixture(autouse=True)

@@ -251,6 +251,69 @@ def train(cfg: dict[str, Any], name: str) -> None:
     )
 
 
+def _verified_training_sources(cfg: dict[str, Any]) -> dict[str, str]:
+    """Bind the first assessment to the inputs recorded by every training run.
+
+    Code snapshots remain historical provenance: only configuration and data
+    identity must match here, so maintenance does not invalidate prior training.
+    """
+    data = cfg["data_directory"]
+    paths = (
+        cfg["source"],
+        cfg["model_config"],
+        data / "manifest.json",
+        data / "fitting.json",
+        data / "development.json",
+    )
+    try:
+        sources = {str(path): sha256_file(path) for path in paths}
+        for model in cfg["models"]:
+            path = cfg["output"] / model["name"] / "run_manifest.json"
+            manifest = json.loads(path.read_text())
+            recorded = manifest["source_sha256"]
+            if (
+                manifest["model"] != model["name"]
+                or manifest["source_checkpoint_sha256"] != model["sha256"]
+                or not isinstance(recorded, dict)
+                or any(recorded.get(str(source)) != sources[str(source)] for source in paths)
+            ):
+                raise Phase1Error(
+                    f"Training configuration or data differs from the recorded run: {model['name']}"
+                )
+            sources[str(path)] = sha256_file(path)
+        dataset = json.loads((data / "manifest.json").read_text())
+        if dataset["status"] != "frozen":
+            raise Phase1Error("Fresh evaluation requires the recorded frozen dataset.")
+        for split in ("fitting", "development", "holdout"):
+            path = data / f"{split}.json"
+            digest = sha256_file(path)
+            if dataset["artifact_sha256"].get(path.name) != digest:
+                raise Phase1Error(f"Frozen evaluation dataset changed: {path.name}")
+            sources[str(path)] = digest
+    except Phase1Error:
+        raise
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+        raise Phase1Error("Missing or invalid training provenance for fresh evaluation.") from error
+    return sources
+
+
+def _verify_frozen_sources(selection: dict[str, Any]) -> None:
+    """Verify new source-bound freezes while preserving legacy freeze compatibility."""
+    if "source_sha256" not in selection:
+        return
+    try:
+        sources = selection["source_sha256"]
+        if not isinstance(sources, dict) or not sources:
+            raise ValueError("A source-bound freeze requires recorded input digests.")
+        for path, digest in sources.items():
+            if sha256_file(Path(path)) != digest:
+                raise Phase1Error(f"Frozen evaluation source changed: {path}")
+    except Phase1Error:
+        raise
+    except (OSError, ValueError, TypeError) as error:
+        raise Phase1Error("Missing or invalid frozen evaluation provenance.") from error
+
+
 def finalize(cfg: dict[str, Any], name: str) -> None:
     # Freeze every model selection before the first new assessment prediction.
     freeze = cfg["output"] / "selection_frozen.json"
@@ -271,11 +334,13 @@ def finalize(cfg: dict[str, Any], name: str) -> None:
                     "recommended_candidate_from_development",
                 )
             }
+        sources = _verified_training_sources(cfg)
         with freeze.open("x") as handle:
             json.dump(
                 {
                     "created_at_utc": datetime.now(UTC).isoformat(),
                     "config_sha256": sha256_file(cfg["source"]),
+                    "source_sha256": sources,
                     "selections": selections,
                 },
                 handle,
@@ -284,6 +349,7 @@ def finalize(cfg: dict[str, Any], name: str) -> None:
     selection = json.loads(freeze.read_text())
     if selection["config_sha256"] != sha256_file(cfg["source"]):
         raise Phase1Error("Settings changed after the development-only selection freeze.")
+    _verify_frozen_sources(selection)
     wrapper, model_cfg = initialize(cfg, name)
     import torch
 

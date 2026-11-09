@@ -4,6 +4,8 @@ import csv
 import io
 import json
 import os
+import struct
+import zlib
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +26,15 @@ def image_bytes(image: Image.Image, fmt: str = "PNG", **kwargs: Any) -> bytes:
     buffer = io.BytesIO()
     image.save(buffer, format=fmt, **kwargs)
     return buffer.getvalue()
+
+
+def png_chunk(kind: bytes, payload: bytes) -> bytes:
+    return (
+        struct.pack(">I", len(payload))
+        + kind
+        + payload
+        + struct.pack(">I", zlib.crc32(kind + payload))
+    )
 
 
 def animal(identifier: str, *, supported: bool = True, accepted: bool = True) -> dict:
@@ -127,6 +138,102 @@ def test_normalize_applies_exif_orientation_and_preserves_lossless_rgb_pixels() 
     assert suffix == ".jpg" and oriented.size == (3, 2)
     unchanged, _ = pipeline.normalize_image(image_bytes(source), cfg)
     np.testing.assert_array_equal(np.asarray(unchanged), np.asarray(source))
+
+
+def test_high_bit_depth_png_is_rejected_before_workers_or_outputs(
+    high_bit_depth_png: bytes, fake_runtime: dict, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # This is a decodable image, not a corrupt-file rejection.
+    with Image.open(io.BytesIO(high_bit_depth_png)) as source:
+        source.load()
+        assert source.size == (5, 1)
+
+    def forbidden(*args: Any, **kwargs: Any) -> None:
+        pytest.fail("Unsupported image must be rejected before starting a worker.")
+
+    monkeypatch.setattr(pipeline, "_run_worker", forbidden)
+    with pytest.raises(ValueError, match="16-bit PNG"):
+        pipeline.run_inference(high_bit_depth_png, "synthetic.png", CONFIG)
+    assert not fake_runtime["output_directory"].exists()
+
+
+@pytest.mark.parametrize("structure", ["ancillary_before_ihdr", "duplicate_ihdr"])
+def test_png_header_structure_cannot_bypass_depth_check(
+    high_bit_depth_png: bytes,
+    fake_runtime: dict,
+    monkeypatch: pytest.MonkeyPatch,
+    structure: str,
+) -> None:
+    if structure == "ancillary_before_ihdr":
+        prefix = png_chunk(b"vpAg", b"\x00" * 20)
+    else:
+        header = bytearray(high_bit_depth_png[16:29])
+        header[8] = 8
+        prefix = png_chunk(b"IHDR", bytes(header))
+    data = high_bit_depth_png[:8] + prefix + high_bit_depth_png[8:]
+    # Pillow accepts these invalid layouts and can downcast RGB/RGBA before conversion.
+    with Image.open(io.BytesIO(data)) as source:
+        source.load()
+        assert source.size == (5, 1)
+    assert data[24] <= 8
+
+    def forbidden(*args: Any, **kwargs: Any) -> None:
+        pytest.fail("Malformed image must be rejected before starting a worker.")
+
+    monkeypatch.setattr(pipeline, "_run_worker", forbidden)
+    with pytest.raises(ValueError, match="PNG 結構無效"):
+        pipeline.run_inference(data, "synthetic.png", CONFIG)
+    assert not fake_runtime["output_directory"].exists()
+
+
+@pytest.mark.parametrize("depth", [1, 2, 4, 8])
+@pytest.mark.parametrize("color_type", [0, 3], ids=["gray", "palette"])
+def test_png_low_depth_and_legal_ancillary_chunks_are_preserved(
+    depth: int, color_type: int
+) -> None:
+    width = 8 // depth
+    values = [index % (2**depth) for index in range(width)]
+    packed = sum(value << (8 - depth * (index + 1)) for index, value in enumerate(values))
+    palette = (
+        png_chunk(b"PLTE", b"".join(bytes((value, value, value)) for value in range(2**depth)))
+        if color_type == 3
+        else b""
+    )
+    data = (
+        b"\x89PNG\r\n\x1a\n"
+        + png_chunk(b"IHDR", struct.pack(">IIBBBBB", width, 1, depth, color_type, 0, 0, 0))
+        + png_chunk(b"tEXt", b"Comment\x00Synthetic low-depth regression image")
+        + png_chunk(b"vpAg", b"\x00" * 20)
+        + palette
+        + png_chunk(b"IDAT", zlib.compress(bytes((0, packed))))
+        + png_chunk(b"IEND", b"")
+    )
+    result, _ = pipeline.normalize_image(
+        data, {"max_upload_bytes": 10000, "max_image_pixels": 1000}
+    )
+    expected = (
+        [round(value * 255 / (2**depth - 1)) for value in values] if color_type == 0 else values
+    )
+    np.testing.assert_array_equal(np.asarray(result), np.array([[[v] * 3 for v in expected]]))
+
+
+@pytest.mark.parametrize("mode", ["1", "L", "P", "RGB", "RGBA"])
+def test_eight_bit_and_lower_png_preserves_pixel_values(mode: str) -> None:
+    source = Image.new(mode, (5, 1))
+    if mode == "P":
+        source.putpalette([value for i in range(256) for value in (i, 255 - i, i // 2)])
+    values = [0, 64, 128, 192, 255]
+    source.putdata(
+        [(value, value, value, 255) if mode == "RGBA" else (value,) * 3 for value in values]
+        if mode in {"RGB", "RGBA"}
+        else [0, 255, 0, 255, 0]
+        if mode == "1"
+        else values
+    )
+    result, _ = pipeline.normalize_image(
+        image_bytes(source), {"max_upload_bytes": 10000, "max_image_pixels": 1000}
+    )
+    np.testing.assert_array_equal(np.asarray(result), np.asarray(source.convert("RGB")))
 
 
 @pytest.mark.parametrize("problem", ["empty", "invalid", "gif", "pixels", "bytes", "animated"])

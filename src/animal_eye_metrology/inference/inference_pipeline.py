@@ -111,6 +111,29 @@ def load_result(run_dir: Path) -> dict[str, Any]:
     return json.loads((run_dir / "result.json").read_text(encoding="utf-8"))
 
 
+def _validate_png_depth(data: bytes) -> None:
+    """Read encoded depth from one canonical IHDR before Pillow can downcast RGB16."""
+    malformed = "PNG 結構無效；圖片資料前須以唯一的 IHDR 標頭開始。"
+    if len(data) < 33 or data[:16] != b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR":
+        raise ValueError(malformed)
+    if data[24] > 8:
+        raise ValueError(
+            "不支援 16-bit PNG；請自行確認亮度轉換後提供 8-bit PNG 或 JPEG，"
+            "系統不會自動截斷或縮放色階。"
+        )
+    offset = 33
+    while offset + 12 <= len(data):
+        size = int.from_bytes(data[offset : offset + 4], "big")
+        kind = data[offset + 4 : offset + 8]
+        end = offset + 12 + size
+        if end > len(data) or kind in (b"IHDR", b"IEND"):
+            raise ValueError(malformed)
+        if kind == b"IDAT":
+            return
+        offset = end
+    raise ValueError(malformed)
+
+
 def normalize_image(data: bytes, cfg: dict[str, Any]) -> tuple[Image.Image, str]:
     """Decode JPEG/PNG, apply EXIF orientation, composite transparency on white; no resizing."""
     if not data or len(data) > cfg["max_upload_bytes"]:
@@ -121,6 +144,8 @@ def normalize_image(data: bytes, cfg: dict[str, Any]) -> tuple[Image.Image, str]
             with Image.open(io.BytesIO(data)) as source:
                 if source.format not in ("JPEG", "PNG"):
                     raise ValueError("僅接受實際內容為 JPEG 或 PNG 的圖片。")
+                if source.format == "PNG":
+                    _validate_png_depth(data)
                 if source.width * source.height > cfg["max_image_pixels"]:
                     raise ValueError("圖片像素數超過限制；請先提供較小的原圖。")
                 if getattr(source, "n_frames", 1) != 1:

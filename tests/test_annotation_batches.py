@@ -1,15 +1,48 @@
 """Synthetic candidate batches preserve source identity and never create eye GT."""
 
 import json
+import multiprocessing
 from pathlib import Path
+from typing import Any
 from zipfile import ZipFile
 
 import pytest
 from PIL import Image
 
-from animal_eye_metrology.annotation.annotation_session import read_session, status
+from animal_eye_metrology.annotation.annotation_session import (
+    AnnotationSession,
+    read_session,
+    status,
+)
 from animal_eye_metrology.annotation.batches import create_batch
 from animal_eye_metrology.core.errors import Phase1Error
+
+
+def _create_batch_process(
+    root: Path,
+    split: str,
+    started: Any,
+    preparing: Any,
+    release: Any,
+    result: Any,
+) -> None:
+    """Pause a real writer after selection, before its discovery marker is published."""
+    import animal_eye_metrology.annotation.batches as batches
+
+    original_prepare = batches.prepare
+
+    def prepare(session: AnnotationSession) -> dict[str, Any]:
+        preparing.set()
+        if not release.wait(timeout=15):
+            raise TimeoutError("Synthetic writer was not released")
+        return original_prepare(session)
+
+    batches.prepare = prepare
+    started.set()
+    try:
+        result.put(("ok", str(batches.create_batch(root, split, 1, 42))))
+    except Exception as error:
+        result.put(("error", repr(error)))
 
 
 def source(root: Path, raw: dict, split: str, zipped: bool = False) -> None:
@@ -68,6 +101,101 @@ def test_insufficient_candidates_do_not_publish_a_partial_batch(
 def test_invalid_source_rejected_before_accessing_files(tmp_path: Path) -> None:
     with pytest.raises(Phase1Error):
         create_batch(tmp_path, "../../other", 5)
+
+
+@pytest.mark.parametrize("second_split", ["val2017", "train2017"])
+def test_concurrent_processes_wait_for_publication_and_select_distinct_images(
+    tmp_path: Path, synthetic_coco: dict, second_split: str
+) -> None:
+    source(tmp_path, synthetic_coco, "val2017")
+    if second_split == "train2017":
+        # Both source splits intentionally contain identical image bytes.
+        source(tmp_path, synthetic_coco, "train2017", zipped=True)
+    context = multiprocessing.get_context("spawn")
+    started = [context.Event(), context.Event()]
+    preparing = [context.Event(), context.Event()]
+    release = [context.Event(), context.Event()]
+    release[1].set()
+    result = context.Queue()
+    writers = [
+        context.Process(
+            target=_create_batch_process,
+            args=(tmp_path, split, started[index], preparing[index], release[index], result),
+        )
+        for index, split in enumerate(("val2017", second_split))
+    ]
+    active = []
+    try:
+        writers[0].start()
+        active.append(writers[0])
+        assert preparing[0].wait(timeout=15)
+        writers[1].start()
+        active.append(writers[1])
+        assert started[1].wait(timeout=15)
+        assert not preparing[1].wait(timeout=0.5), "Second writer selected before publication"
+        release[0].set()
+        outcomes = [result.get(timeout=15), result.get(timeout=15)]
+        assert all(state == "ok" for state, _ in outcomes), outcomes
+        records = [
+            json.loads((Path(config).parent / "batch_manifest.json").read_text())
+            for _, config in outcomes
+        ]
+        assert not set(records[0]["selected_image_ids"]) & set(records[1]["selected_image_ids"])
+        assert not set(records[0]["image_sha256"].values()) & set(
+            records[1]["image_sha256"].values()
+        )
+    finally:
+        release[0].set()
+        for writer in active:
+            writer.join(timeout=15)
+            if writer.is_alive():
+                writer.terminate()
+                writer.join(timeout=5)
+        result.close()
+        result.join_thread()
+
+
+def test_prepare_failure_releases_persistent_lock_without_publishing_batch(
+    tmp_path: Path, synthetic_coco: dict, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import animal_eye_metrology.annotation.batches as batches
+
+    source(tmp_path, synthetic_coco, "val2017")
+
+    def fail_prepare(session: AnnotationSession) -> None:
+        raise OSError("Synthetic preparation failure")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(batches, "prepare", fail_prepare)
+        with pytest.raises(OSError, match="Synthetic preparation failure"):
+            create_batch(tmp_path, "val2017", 1, 42)
+    base = tmp_path / "outputs/phase3"
+    lock = base / ".eye_annotation_batches.lock"
+    inode = lock.stat().st_ino
+    assert not list((base / "eye_annotation_batches").glob("*/batch_manifest.json"))
+    context = multiprocessing.get_context("spawn")
+    started, preparing = context.Event(), context.Event()
+    release = context.Event()
+    release.set()
+    result = context.Queue()
+    writer = context.Process(
+        target=_create_batch_process,
+        args=(tmp_path, "val2017", started, preparing, release, result),
+    )
+    writer.start()
+    try:
+        state, value = result.get(timeout=15)
+        assert state == "ok", value
+        assert status(read_session(Path(value)))["saved_eyes"] == 0
+        assert len(list((base / "eye_annotation_batches").glob("*/batch_manifest.json"))) == 1
+        assert lock.stat().st_ino == inode
+    finally:
+        writer.join(timeout=15)
+        if writer.is_alive():
+            writer.terminate()
+            writer.join(timeout=5)
+        result.close()
+        result.join_thread()
 
 
 def test_ui_can_create_and_reopen_a_source_selected_batch(
