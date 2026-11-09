@@ -42,3 +42,9 @@ API／UI／CLI 共用輸出目錄時以檔案鎖互斥，忙碌時拒絕執行�
 推論不讀人工 GT。人工參考只供離線評分，避免用 GT 改提示或選遮罩。
 `completed` 表示流程完成；`candidate` 表示端點可計算；量測資格仍為 `unverified`。
 公式與驗證見 [Methodology](methodology.md)。
+
+## Training and Experiments
+
+離線訓練由 `research/` 協調、`data/` 凍結資料、`models/` 提供目標轉換與官方 COCO 評估。
+Streamlit 的「訓練與實驗」頁籤只讀取 `examples/training/` 的公開紀錄；不啟動訓練或改寫推論設定。
+環境、命令與選模隔離見 [Training](training.md)。

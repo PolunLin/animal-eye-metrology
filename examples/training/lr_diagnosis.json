@@ -1,0 +1,250 @@
+{
+  "best_training_candidate_gain_vs_initialization": 0.014186601180205649,
+  "candidate_results": {
+    "legacy_1e3": {
+      "candidate": "legacy_1e3",
+      "development_mask_ap": 0.37160995135361363,
+      "device": "cpu",
+      "gradient_clip_fraction": 1.0,
+      "gradient_norm_max": 464.9160461425781,
+      "gradient_norm_min": 58.44655990600586,
+      "holdout_ground_truth_or_predictions_read": false,
+      "image_occurrences": 256,
+      "learning_rate": 0.001,
+      "mask_downsampled_empty_annotation_ids": [
+        367366,
+        554931,
+        1399226,
+        1399935,
+        1400546,
+        1764311,
+        2065052,
+        2065584,
+        2065925,
+        2066267
+      ],
+      "mask_sampling_policy": "Per-instance uint8 bitmap; OpenCV INTER_NEAREST to the rounded letterbox content size; zero padding; OpenCV INTER_NEAREST from the square canvas to image_size/4. No polygon conversion, component splitting, instance merging, or foreground repair.",
+      "mean_loss": 6.218783559277654,
+      "model": "yolo11n_seg",
+      "optimizer_recipe": {
+        "accumulation_steps": 1,
+        "all_batchnorm_eval": true,
+        "ema": false,
+        "frozen_blocks": "0..9",
+        "loss_divided_by_microbatch": true,
+        "momentum": 0.9,
+        "name": "SGD",
+        "nesterov": false,
+        "warmup": false,
+        "weight_decay_all_trainable_parameters": 0.0005
+      },
+      "optimizer_steps": 128,
+      "parameter_relative_l2_drift": {
+        "bn_affine": {
+          "absolute_l2": 0.07759514058313574,
+          "parameter_tensors": 180,
+          "reference_l2": 145.85948733204884,
+          "relative_l2": 0.0005319855568015988
+        },
+        "head": {
+          "absolute_l2": 0.3370519923045955,
+          "parameter_tensors": 102,
+          "reference_l2": 190.49213635050546,
+          "relative_l2": 0.001769374834898276
+        },
+        "overall": {
+          "absolute_l2": 0.7084130470696093,
+          "parameter_tensors": 291,
+          "reference_l2": 224.44246674922502,
+          "relative_l2": 0.0031563235662577897
+        },
+        "trainable": {
+          "absolute_l2": 0.7084130470696093,
+          "parameter_tensors": 191,
+          "reference_l2": 203.3144468784737,
+          "relative_l2": 0.003484322230643286
+        }
+      },
+      "seed": 42,
+      "status": "complete",
+      "threads": 4,
+      "training_seconds": 38.78824895899743,
+      "unique_fitting_images": 256
+    },
+    "lr_1e4": {
+      "candidate": "lr_1e4",
+      "development_mask_ap": 0.4920963505525211,
+      "device": "cpu",
+      "gradient_clip_fraction": 1.0,
+      "gradient_norm_max": 219.10101318359375,
+      "gradient_norm_min": 42.44202423095703,
+      "holdout_ground_truth_or_predictions_read": false,
+      "image_occurrences": 256,
+      "learning_rate": 0.0001,
+      "mask_downsampled_empty_annotation_ids": [
+        367366,
+        554931,
+        1399226,
+        1399935,
+        1400546,
+        1764311,
+        2065052,
+        2065584,
+        2065925,
+        2066267
+      ],
+      "mask_sampling_policy": "Per-instance uint8 bitmap; OpenCV INTER_NEAREST to the rounded letterbox content size; zero padding; OpenCV INTER_NEAREST from the square canvas to image_size/4. No polygon conversion, component splitting, instance merging, or foreground repair.",
+      "mean_loss": 4.756724592298269,
+      "model": "yolo11n_seg",
+      "optimizer_recipe": {
+        "accumulation_steps": 1,
+        "all_batchnorm_eval": true,
+        "ema": false,
+        "frozen_blocks": "0..9",
+        "loss_divided_by_microbatch": true,
+        "momentum": 0.9,
+        "name": "SGD",
+        "nesterov": false,
+        "warmup": false,
+        "weight_decay_all_trainable_parameters": 0.0005
+      },
+      "optimizer_steps": 128,
+      "parameter_relative_l2_drift": {
+        "bn_affine": {
+          "absolute_l2": 0.007803808295180817,
+          "parameter_tensors": 180,
+          "reference_l2": 145.85948733204884,
+          "relative_l2": 5.350223312807526e-05
+        },
+        "head": {
+          "absolute_l2": 0.052942928692058425,
+          "parameter_tensors": 102,
+          "reference_l2": 190.49213635050546,
+          "relative_l2": 0.00027792710873189775
+        },
+        "overall": {
+          "absolute_l2": 0.08898319196512328,
+          "parameter_tensors": 291,
+          "reference_l2": 224.44246674922502,
+          "relative_l2": 0.00039646325962254883
+        },
+        "trainable": {
+          "absolute_l2": 0.08898319196512328,
+          "parameter_tensors": 191,
+          "reference_l2": 203.3144468784737,
+          "relative_l2": 0.0004376629075370666
+        }
+      },
+      "seed": 42,
+      "status": "complete",
+      "threads": 4,
+      "training_seconds": 38.70928595797159,
+      "unique_fitting_images": 256
+    },
+    "lr_1e5": {
+      "candidate": "lr_1e5",
+      "development_mask_ap": 0.5180539010067984,
+      "device": "cpu",
+      "gradient_clip_fraction": 1.0,
+      "gradient_norm_max": 211.017578125,
+      "gradient_norm_min": 39.63623046875,
+      "holdout_ground_truth_or_predictions_read": false,
+      "image_occurrences": 256,
+      "learning_rate": 1e-05,
+      "mask_downsampled_empty_annotation_ids": [
+        367366,
+        554931,
+        1399226,
+        1399935,
+        1400546,
+        1764311,
+        2065052,
+        2065584,
+        2065925,
+        2066267
+      ],
+      "mask_sampling_policy": "Per-instance uint8 bitmap; OpenCV INTER_NEAREST to the rounded letterbox content size; zero padding; OpenCV INTER_NEAREST from the square canvas to image_size/4. No polygon conversion, component splitting, instance merging, or foreground repair.",
+      "mean_loss": 4.834684759378433,
+      "model": "yolo11n_seg",
+      "optimizer_recipe": {
+        "accumulation_steps": 1,
+        "all_batchnorm_eval": true,
+        "ema": false,
+        "frozen_blocks": "0..9",
+        "loss_divided_by_microbatch": true,
+        "momentum": 0.9,
+        "name": "SGD",
+        "nesterov": false,
+        "warmup": false,
+        "weight_decay_all_trainable_parameters": 0.0005
+      },
+      "optimizer_steps": 128,
+      "parameter_relative_l2_drift": {
+        "bn_affine": {
+          "absolute_l2": 0.0011962063922891489,
+          "parameter_tensors": 180,
+          "reference_l2": 145.85948733204884,
+          "relative_l2": 8.201087321567142e-06
+        },
+        "head": {
+          "absolute_l2": 0.015690372373403,
+          "parameter_tensors": 102,
+          "reference_l2": 190.49213635050546,
+          "relative_l2": 8.236755949092156e-05
+        },
+        "overall": {
+          "absolute_l2": 0.01977444910158231,
+          "parameter_tensors": 291,
+          "reference_l2": 224.44246674922502,
+          "relative_l2": 8.810475748191085e-05
+        },
+        "trainable": {
+          "absolute_l2": 0.01977444910158231,
+          "parameter_tensors": 191,
+          "reference_l2": 203.3144468784737,
+          "relative_l2": 9.726042298116676e-05
+        }
+      },
+      "seed": 42,
+      "status": "complete",
+      "threads": 4,
+      "training_seconds": 38.60453237500042,
+      "unique_fitting_images": 256
+    }
+  },
+  "diagnosis_source_sha256": "1c8a8387f45c6a241d07af4cea2af37c6bf5f79bf97c956935b7006e0f95bd9d",
+  "evaluation_source_file": "outputs/training/yolo_recovery_v2/diagnosis_lr/provenance/training.py",
+  "fixed_inputs_sha256": {
+    "configs/phase2_pilot.toml": "e0be94e1624e4b8a0c65dadd68a3f4753c511c3e1ac3f7d49f5cb28244699835",
+    "configs/segmentation_training_pilot.toml": "e55bcc4290620259a87db24621749cd51e1fc263ecaa51479eb95d0ae168c8e9",
+    "outputs/training/pilot_v1/data/development.json": "78dedbc9a3c966480508601ec6bb4ef80b164006bbd8ba31a3802202f77d7684",
+    "outputs/training/pilot_v1/data/fitting.json": "86b669e21b5ac9b7cce0a435ec5d6c76080c644e84c07df2f45d240a74f85dda",
+    "weights/yolo11n-seg.pt": "55ed65c56c91713d23e8402371c6c49a6fd84f257f7dce452e8d70e41dcbe152"
+  },
+  "fixed_inputs_unchanged": true,
+  "highest_development_training_candidate": "lr_1e5",
+  "holdout_ground_truth_or_predictions_read": false,
+  "limitations": [
+    "One seed and one epoch on fixed development images; no causal claim beyond this controlled LR contrast.",
+    "Initialization is an explicit candidate; smaller LR is not presumed superior.",
+    "No holdout or official COCO val inference is performed."
+  ],
+  "loaded_adapter_source_sha256": "4745c4cbbce1cb0fede92802cb0201e46bf4285f8a4ffbf9bb1bbb6a82a3b853",
+  "model": "yolo11n_seg",
+  "only_changed_training_setting": "learning_rate",
+  "selection_including_initialization": "lr_1e5",
+  "source_snapshot_sha256": {
+    "configs/phase2_pilot.toml": "e0be94e1624e4b8a0c65dadd68a3f4753c511c3e1ac3f7d49f5cb28244699835",
+    "configs/segmentation_training_pilot.toml": "e55bcc4290620259a87db24621749cd51e1fc263ecaa51479eb95d0ae168c8e9",
+    "src/animal_eye_metrology/data/training_data.py": "9a4e19bfbb5c9c503bc597650b0f09a6838fe56b00a2cb297d79dc168072ee82",
+    "src/animal_eye_metrology/models/segmentation.py": "abf0ef9561e1575bb66b296456019d93f89ab61f16534ed0135307f0c66b8de0",
+    "src/animal_eye_metrology/models/training_yolo.py": "4745c4cbbce1cb0fede92802cb0201e46bf4285f8a4ffbf9bb1bbb6a82a3b853",
+    "src/animal_eye_metrology/research/training.py": "1714794e53ca0a42c54221703028afd4c9df6e9e724d5341b1573a4d4b94c3e7"
+  },
+  "status": "complete",
+  "subsequent_training_started": false,
+  "untrained_development_mask_ap": 0.5038672998265927,
+  "workspace_changes_since_snapshot": {
+    "src/animal_eye_metrology/models/training_yolo.py": "bf1b3bed164b3964a42e60331decf59121b97cb3322c4f0434a89af01753780b"
+  }
+}

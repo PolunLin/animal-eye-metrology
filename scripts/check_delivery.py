@@ -13,9 +13,26 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
-PUBLIC_DOCUMENTS = ("docs/api.md", "docs/architecture.md", "docs/methodology.md")
+PUBLIC_DOCUMENTS = (
+    "docs/api.md",
+    "docs/architecture.md",
+    "docs/methodology.md",
+    "docs/training.md",
+    "docs/eye_annotation.md",
+    "docs/eye_mask_protocol_v2.md",
+)
 
 REQUIRED_FILES = (
+    "docs/eye_annotation.md",
+    "docs/eye_mask_protocol_v2.md",
+    "configs/annotation_workspace.toml",
+    "app/assets/eye_canvas.js",
+    "docs/training.md",
+    "configs/training_models.toml",
+    "configs/segmentation_training_pilot.toml",
+    "configs/segmentation_training_recovery.toml",
+    "src/animal_eye_metrology/ui/training_view.py",
+    "examples/training/manifest.json",
     "README.md",
     "LICENSE",
     "pyproject.toml",
@@ -98,6 +115,19 @@ def check_documentation_links(root: Path) -> None:
         raise ValueError(f"Unpublished, missing or out-of-repository documentation links: {broken}")
 
 
+def check_training_evidence(root: Path) -> None:
+    """Verify shipped records without requiring the original private output tree."""
+    directory = root / "examples/training"
+    manifest = json.loads((directory / "manifest.json").read_text())
+    for row in manifest["records"]:
+        path = directory / row["file"]
+        if (
+            path.parent != directory
+            or hashlib.sha256(path.read_bytes()).hexdigest() != row["sha256"]
+        ):
+            raise ValueError("Published training evidence digest mismatch.")
+
+
 def check_recorded_csv(root: Path) -> None:
     """Validate the recorded bytes and distance arithmetic, never model accuracy."""
     sample = root / "examples/measurements.csv"
@@ -132,6 +162,7 @@ def check_delivery(root: Path) -> dict[str, Any]:
     for name, operation in (
         ("documentation_local_links", lambda: check_documentation_links(root)),
         ("recorded_csv", lambda: check_recorded_csv(root)),
+        ("training_evidence", lambda: check_training_evidence(root)),
     ):
         try:
             operation()

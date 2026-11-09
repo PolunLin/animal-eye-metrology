@@ -1,0 +1,20 @@
+[
+  {
+    "clipped_batch_fraction": 1.0,
+    "development_mask_ap": 0.5946718338172929,
+    "epoch": 1,
+    "mean_loss": 3.5872314581647515
+  },
+  {
+    "clipped_batch_fraction": 1.0,
+    "development_mask_ap": 0.5901193835534068,
+    "epoch": 2,
+    "mean_loss": 3.5752009064890444
+  },
+  {
+    "clipped_batch_fraction": 1.0,
+    "development_mask_ap": 0.5884314734352797,
+    "epoch": 3,
+    "mean_loss": 3.579166998155415
+  }
+]

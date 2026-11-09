@@ -30,7 +30,9 @@
 | 眼部遮罩 | SAM 2.1 Tiny，以預測眼點及局部 ROI 分割 |
 | 重現與品質 | 固定來源 commit／權重 SHA-256、CPU FP32、seed 42、4 threads、Pytest、Ruff |
 
-三個模型分別負責不同子任務；本交付沒有模型競賽、微調訓練或研究工作區。
+三個模型分別負責不同子任務。專案包含動物分割微調、學習率診斷與再評估；
+目前推論仍採原始預訓練權重。方法、歷史結果及重現命令見 [Training](docs/training.md)。
+介面的「訓練與實驗」頁籤可查看保存結果、曲線與下載比較 CSV。
 應用使用 Torch 2.9.1，HRNet 使用 Torch 2.2.2／MMCV 2.1.0，以兩個 Python 環境隔離相依。
 
 ## Local Setup
@@ -73,6 +75,11 @@ CLI 使用同一流程：
 ```sh
 .runtime/app/bin/python -m animal_eye_metrology --image data/000000125405.jpg
 ```
+
+## Eye Annotation
+
+「眼睛標註與審核」頁籤提供 v2 人工輪廓、草稿與審核、版本保存與遮罩下載。
+準備工作區與新增批次見 [Eye Annotation](docs/eye_annotation.md)。頁面不會自動訓練或更換模型。
 
 ## COCO Example
 
@@ -160,7 +167,7 @@ examples/                 Recorded baseline CSV and input provenance
 docs/                     API, architecture and methodology
 ```
 
-研究紀錄、替代模型、訓練工具、歷史程式與答辯筆記存於 `local_only/`，由 Git 與 Docker 排除。
+訓練程式、設定、測試與精簡實驗證據納入公開交付；其他歷史研究與答辯筆記仍保存在 `local_only/`，由 Git 與 Docker 排除。
 資料集、權重、環境及執行產物也不提交。公開版本不依賴本機研究備份。
 
 ## License
