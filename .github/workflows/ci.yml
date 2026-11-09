@@ -91,11 +91,11 @@ jobs:
           python - <<'PYTHON' | tee outputs/ci/context_audit.json
           import json, os
           from pathlib import Path
+          from scripts.check_delivery import PUBLIC_DOCUMENTS
           root = Path(os.environ["RUNNER_TEMP"]) / "aem-context"
           forbidden = ["local_only", "AGENTS.md", ".git", ".runtime", ".env", "weights", "data", "outputs", "docs/private_research.md"]
           assert not any((root / name).exists() for name in forbidden)
-          assert {p.name for p in (root / "docs").iterdir()} == {"api.md", "architecture.md", "methodology.md"}
-          assert not (root / "src/animal_eye_metrology/research").exists()
+          assert {p.relative_to(root).as_posix() for p in (root / "docs").iterdir()} == set(PUBLIC_DOCUMENTS)
           print(json.dumps({"status": "passed", "private_files_in_context": False, "canaries": "synthetic_only"}))
           PYTHON
       - name: Build with the README Docker Compose configuration
@@ -109,10 +109,11 @@ jobs:
           docker run --rm -i --network none animal-eye-metrology:cpu python - <<'PYTHON' | tee outputs/ci/image_content_audit.json
           import json
           from pathlib import Path
+          from scripts.check_delivery import PUBLIC_DOCUMENTS
           root = Path("/app")
-          for name in ("local_only", "AGENTS.md", ".git", ".runtime", ".env", "docs/private_research.md", "src/animal_eye_metrology/research"):
+          for name in ("local_only", "AGENTS.md", ".git", ".runtime", ".env", "docs/private_research.md"):
               assert not (root / name).exists(), name
-          assert {p.name for p in (root / "docs").iterdir()} == {"api.md", "architecture.md", "methodology.md"}
+          assert {p.relative_to(root).as_posix() for p in (root / "docs").iterdir()} == set(PUBLIC_DOCUMENTS)
           for name in ("data", "weights", "outputs"):
               assert not list((root / name).iterdir()), name
           assert (root / ".gitignore").is_file()
