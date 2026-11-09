@@ -1,0 +1,75 @@
+{
+  "recorded_on": "2026-11-08",
+  "records": [
+    {
+      "file": "pilot_comparison.csv",
+      "source": "outputs/training/pilot_v1/comparison.csv",
+      "sha256": "9bdc3f2bc67feb86f428d84b0bfcc1fbf052338dc5e814b430ad0e3092483878",
+      "source_sha256": "9bdc3f2bc67feb86f428d84b0bfcc1fbf052338dc5e814b430ad0e3092483878",
+      "transformation": "Exact byte copy."
+    },
+    {
+      "file": "recovery_comparison.csv",
+      "source": "outputs/training/yolo_recovery_v2/comparison.csv",
+      "sha256": "855b57c063fdaeda54d8423810f506e9e0147b98adb6c605738dcc023ca8bc34",
+      "source_sha256": "855b57c063fdaeda54d8423810f506e9e0147b98adb6c605738dcc023ca8bc34",
+      "transformation": "Exact byte copy."
+    },
+    {
+      "file": "lr_diagnosis.json",
+      "source": "outputs/training/yolo_recovery_v2/diagnosis_lr/summary.json",
+      "sha256": "e4fc69f101d54b99d5e02c25ba160f8db8482f0f0caa8e50d7a90453affc6f95",
+      "source_sha256": "565b26db5eecf3284d3cef891a4a41f9104b215c731e4ca6ea95f1025fdf9e04",
+      "transformation": "Project-root absolute paths normalized to relative paths; values unchanged."
+    },
+    {
+      "file": "evaluation_verification.json",
+      "source": "outputs/training/yolo_recovery_v2/verification_evaluation.json",
+      "sha256": "29ad36b23b1f3faeb7f086da5dd8fff42c51dccf7f4fa5e5c4d0b959351f55bb",
+      "source_sha256": "4f20ecfeb5bb2ab7812903e604179ff95d7fec2ebe912333359b6438cfee6033",
+      "transformation": "Project-root absolute paths normalized to relative paths; values unchanged."
+    },
+    {
+      "file": "yolo11n_seg_epochs.json",
+      "source": "outputs/training/yolo_recovery_v2/retrain/yolo11n_seg/epochs.json",
+      "sha256": "9555f8f0efe77eaa40b241a3a31d93166abde9be4fa0030ae954c1dc014ed40d",
+      "source_sha256": "9555f8f0efe77eaa40b241a3a31d93166abde9be4fa0030ae954c1dc014ed40d",
+      "transformation": "Exact byte copy."
+    },
+    {
+      "file": "yolo11n_seg_export_verification.json",
+      "source": "outputs/training/yolo_recovery_v2/retrain/yolo11n_seg/native_export_verification.json",
+      "sha256": "9ffa21548cb062c7cf9816e826d563ea1e283209803cd5f3532279edb57dc119",
+      "source_sha256": "ce6c2739b0c967eed2c4d5ceed13a0d82024b88b13e82439625d65f7d066a17c",
+      "transformation": "Project-root absolute paths normalized to relative paths; values unchanged."
+    },
+    {
+      "file": "yolo26n_seg_epochs.json",
+      "source": "outputs/training/yolo_recovery_v2/retrain/yolo26n_seg/epochs.json",
+      "sha256": "9f09817e767f7c05eb894a0da82f1b6e0c53abfdcda3369457b1e50c92804ae4",
+      "source_sha256": "9f09817e767f7c05eb894a0da82f1b6e0c53abfdcda3369457b1e50c92804ae4",
+      "transformation": "Exact byte copy."
+    },
+    {
+      "file": "yolo26n_seg_export_verification.json",
+      "source": "outputs/training/yolo_recovery_v2/retrain/yolo26n_seg/native_export_verification.json",
+      "sha256": "15ad3f8d873423aee3e2c528841205b5f9bebbb115521fba1363a7f86361372b",
+      "source_sha256": "97a924e923e2cdf1a562230fbfa1aa992e688706d378138159433c1bf97746a2",
+      "transformation": "Project-root absolute paths normalized to relative paths; values unchanged."
+    },
+    {
+      "file": "yolo26s_seg_epochs.json",
+      "source": "outputs/training/yolo_recovery_v2/retrain/yolo26s_seg/epochs.json",
+      "sha256": "639c881ed9bdf4f7b5bcc0a7f7941331c0e31a173900232cadeed42051777f7d",
+      "source_sha256": "639c881ed9bdf4f7b5bcc0a7f7941331c0e31a173900232cadeed42051777f7d",
+      "transformation": "Exact byte copy."
+    },
+    {
+      "file": "yolo26s_seg_export_verification.json",
+      "source": "outputs/training/yolo_recovery_v2/retrain/yolo26s_seg/native_export_verification.json",
+      "sha256": "bbcb6db47472672d53fb7bf2f456cb19d570d4edb2528de21dd012d0ac40dcd3",
+      "source_sha256": "331edff03ed3cd33e8d7f659e0366672cd46c8624a92c7c057e9d12d781d8b4b",
+      "transformation": "Project-root absolute paths normalized to relative paths; values unchanged."
+    }
+  ]
+}

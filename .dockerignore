@@ -41,3 +41,9 @@ phase*.md
 runs
 .ipynb_checkpoints
 **/.ipynb_checkpoints
+
+!docs/training.md
+
+!docs/eye_annotation.md
+
+!docs/eye_mask_protocol_v2.md

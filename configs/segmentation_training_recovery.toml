@@ -1,0 +1,22 @@
+# Controlled recovery: only the learning rate changes from the v1 YOLO recipe.
+model_config = "training_models.toml"
+model_names = ["yolo11n_seg", "yolo26n_seg", "yolo26s_seg"]
+output = "../outputs/training/yolo_recovery_v2/retrain"
+data_directory = "../outputs/training/yolo_recovery_v2/data"
+previous_output = "../outputs/training/pilot_v1"
+seed = 42
+epochs = 3
+batch_size = 2
+image_size = 640
+freeze_yolo_blocks = 10
+learning_rate = 0.00001
+momentum = 0.9
+weight_decay = 0.0005
+gradient_clip_norm = 10.0
+threads = 4
+device = "cpu"
+evaluation_device = "cpu"
+confidence_floor = 0.001
+max_detections = 100
+mask_downsampling = "nearest"
+image_resize_dtype = "float32"

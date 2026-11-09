@@ -46,7 +46,7 @@ def test_published_modules_resolve_without_legacy_or_private_packages() -> None:
             "animal_eye_metrology." + location.removesuffix(".py").replace("/", ".")
         )
         assert Path(canonical.__file__).resolve() == module_source(name)
-    assert not (PACKAGE_ROOT / "research").joinpath("__init__.py").exists()
+    assert (PACKAGE_ROOT / "research").joinpath("__init__.py").is_file()
     assert not (PACKAGE_ROOT / "_compat.py").exists()
 
 

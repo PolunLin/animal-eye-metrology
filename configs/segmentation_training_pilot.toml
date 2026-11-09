@@ -1,0 +1,24 @@
+# First bounded supervised fine-tuning run, authorized on 2026-11-08.
+# Original COCO val2017 and all eye reference data remain outside this run.
+model_config = "training_models.toml"
+output = "../outputs/training/pilot_v1"
+fitting_size = 256
+development_size = 64
+holdout_size = 64
+candidate_limit = 768
+seed = 42
+split_seed = 43
+epochs = 3
+batch_size = 2
+image_size = 640
+maskrcnn_max_size = 1024
+freeze_yolo_blocks = 10
+learning_rate = 0.001
+momentum = 0.9
+weight_decay = 0.0005
+gradient_clip_norm = 10.0
+threads = 4
+device = "mps"
+evaluation_device = "cpu"
+confidence_floor = 0.001
+max_detections = 100

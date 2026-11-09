@@ -1,0 +1,5 @@
+model,device,optimizer_steps,best_epoch,baseline_holdout_mask_ap,finetuned_holdout_mask_ap,changed_parameter_count
+yolo11n_seg,mps,384,2,0.5121115654159267,0.3024178471813699,191
+yolo26n_seg,cpu,384,3,0.5306772226598195,0.4562498599664909,343
+maskrcnn_v2,cpu,384,1,0.6676563754043289,0.6700425868714839,42
+yolo26s_seg,cpu,384,3,0.6371488398536506,0.5339294467443327,343
