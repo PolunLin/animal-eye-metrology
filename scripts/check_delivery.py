@@ -23,6 +23,11 @@ PUBLIC_DOCUMENTS = (
 )
 
 REQUIRED_FILES = (
+    "scripts/evaluate_reviewed.py",
+    "src/animal_eye_metrology/annotation/reviewed_snapshot.py",
+    "src/animal_eye_metrology/measurement/reviewed_evaluation.py",
+    "examples/reviewed_validation/README.md",
+    "examples/reviewed_validation/manifest.json",
     "docs/eye_annotation.md",
     "docs/eye_mask_protocol_v2.md",
     "configs/annotation_workspace.toml",
@@ -95,7 +100,12 @@ REQUIRED_FILES = (
 def check_documentation_links(root: Path) -> None:
     """Check published documentation links without relying on local research archives."""
     broken = []
-    for relative in ("README.md", *PUBLIC_DOCUMENTS, "examples/README.md"):
+    for relative in (
+        "README.md",
+        *PUBLIC_DOCUMENTS,
+        "examples/README.md",
+        "examples/reviewed_validation/README.md",
+    ):
         document = root / relative
         text = document.read_text(encoding="utf-8")
         for target in re.findall(r"\[[^\]]+\]\(([^\s)]+)\)", text):
@@ -153,6 +163,33 @@ def check_recorded_csv(root: Path) -> None:
         raise ValueError("The example must demonstrate both requested measurement types.")
 
 
+def check_reviewed_evidence(root: Path) -> None:
+    """Verify the portable reviewed evaluation without models or the annotation workspaces."""
+    directory = root / "examples/reviewed_validation"
+    manifest = json.loads((directory / "manifest.json").read_text())
+    for relative, digest in manifest["files_sha256"].items():
+        path = (directory / relative).resolve()
+        if not path.is_relative_to(directory.resolve()) or Path(relative).is_absolute():
+            raise ValueError("Reviewed evidence path escapes its directory.")
+        if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+            raise ValueError(f"Reviewed evidence digest mismatch: {relative}")
+    reference = json.loads((directory / "reference.json").read_text())
+    predictions = json.loads((directory / "predictions.json").read_text())
+    summary = json.loads((directory / "summary.json").read_text())
+    reference_digest = hashlib.sha256((directory / "reference.json").read_bytes()).hexdigest()
+    prediction_digest = hashlib.sha256((directory / "predictions.json").read_bytes()).hexdigest()
+    if (
+        predictions["reference_sha256"] != reference_digest
+        or summary["reference_sha256"] != reference_digest
+        or summary["predictions_sha256"] != prediction_digest
+        or summary["eyes_expected"] != reference["summary"]["eligible_eyes"]
+        or summary["binocular_expected"] != reference["summary"]["binocular_pairs"]
+        or summary["right_eye_pair_expected"] != reference["summary"]["right_right_pairs"]
+        or summary["independent_blind_test"] is not False
+    ):
+        raise ValueError("Reviewed evidence identities or denominators disagree.")
+
+
 def check_delivery(root: Path) -> dict[str, Any]:
     """Return independent, structured checks without installing or downloading anything."""
     root = root.resolve()
@@ -163,6 +200,7 @@ def check_delivery(root: Path) -> dict[str, Any]:
         ("documentation_local_links", lambda: check_documentation_links(root)),
         ("recorded_csv", lambda: check_recorded_csv(root)),
         ("training_evidence", lambda: check_training_evidence(root)),
+        ("reviewed_evaluation_evidence", lambda: check_reviewed_evidence(root)),
     ):
         try:
             operation()

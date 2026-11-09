@@ -50,6 +50,13 @@ REASON_CHOICES = [
     "無法確認左右眼",
     "輪廓需要修正",
 ]
+BLUR_REVIEW_PRESET = {
+    "visibility": "Uncertain",
+    "side_confirmed": "Unknown",
+    "measurement_quality": "Fail",
+    "mask_review_status": "Rejected",
+    "exclusion_reason": "影像模糊",
+}
 
 
 def review_dropdown(label: str, field: str, saved: dict, options: list[str], prefix: str) -> str:
@@ -109,6 +116,56 @@ def animal_choices(
     return ordered, markers, labels
 
 
+def photo_progress_labels(
+    identities: list[tuple[int, int, str]], rows: list[dict[str, str]]
+) -> dict[int, str]:
+    """Summarize saved work per photo without treating drafts as accepted references."""
+    latest: dict[tuple[int, int, str], dict[str, str]] = {}
+    for row in rows:
+        key = int(row["image_id"]), int(row["annotation_id"]), row["eye_side"]
+        if key not in latest or int(row["annotation_version"]) > int(
+            latest[key]["annotation_version"]
+        ):
+            latest[key] = row
+    photos: dict[int, list[dict[str, str] | None]] = {}
+    for key in identities:
+        photos.setdefault(key[0], []).append(latest.get(key))
+    labels = {}
+    for image_id, slots in photos.items():
+        marked = [row for row in slots if row and (row["mask_path"] or row["visibility"])]
+        count, total = len(marked), len(slots)
+        state = "未標註" if not count else "已標註" if count == total else "部分已標註"
+        parts = [f"{state} {count}/{total}"]
+        pending = sum(row["mask_review_status"] in {"Pending", "Uncertain"} for row in marked)
+        rejected = [row for row in marked if row["mask_review_status"] == "Rejected"]
+        excluded = sum(row["visibility"] == "NotVisible" for row in rejected)
+        needs_revision = len(rejected) - excluded
+        if count == total and all(row["mask_review_status"] == "Accepted" for row in marked):
+            parts.append("審核通過")
+        elif count == total and not pending and not needs_revision:
+            parts.append("已審閱")
+        if pending:
+            parts.append(f"待審核 {pending}")
+        if needs_revision:
+            parts.append(f"需修正 {needs_revision}")
+        if excluded:
+            parts.append(f"已排除 {excluded}")
+        labels[image_id] = " · ".join(parts)
+    return labels
+
+
+def eye_review_label(row: dict[str, str] | None) -> str:
+    """Describe the latest saved eye, independently of measurement eligibility."""
+    if not row or not (row["mask_path"] or row["visibility"]):
+        return "未標註"
+    status = row["mask_review_status"]
+    if status == "Accepted":
+        return "審核通過"
+    if status == "Rejected":
+        return "已排除" if row["visibility"] == "NotVisible" else "需修正"
+    return "待審核"
+
+
 def eye_mask_workspace(
     dataset: CocoDataset, config: Any, session: Any = None, *, assets_directory: Path
 ) -> None:
@@ -132,9 +189,7 @@ def eye_mask_workspace(
 
     protocol = session.protocol_version if session else PROTOCOL_VERSION
     st.subheader("眼睛標註與審核 · v2" if session else "Eye Mask Annotation · Phase 3B")
-    st.caption(
-        "人工描繪可見眼部區域；不會自動辨識眼睛。左右依動物自身定義，Mask 重心不等於瞳孔中心。"
-    )
+    st.caption("在原圖上描繪或修正可見眼部區域。左右依動物自身定義，Mask 重心不等於瞳孔中心。")
     phase3 = config.output.parent / "phase3"
     proposal = (
         session.proposal
@@ -149,7 +204,7 @@ def eye_mask_workspace(
     if session:
         st.info(
             "v2：眼裂＋緊鄰且可辨識的眼瞼邊緣；排除眼周毛髮、睫毛、淚痕與色塊。"
-            "本頁不載入 v1 或模型輪廓。請暫時關閉舊成果視窗，從原圖獨立描繪。"
+            "本頁僅提供 v2；每份草稿都需對照原圖確認輪廓、可見性與解剖左右，再儲存審核結果。"
         )
         with st.expander("v2 標註規範與操作流程"):
             st.markdown((session.directory / "protocol.md").read_text(encoding="utf-8"))
@@ -243,13 +298,49 @@ def eye_mask_workspace(
         st.markdown("**標註對象**")
         nav = [st.container(), st.container(), st.container()]
     image_ids = list(dict.fromkeys(int(t["image_id"]) for t in targets))
+    progress_labels = photo_progress_labels(identities, rows)
+    photo_labels = {}
+    for index, value in enumerate(image_ids, start=1):
+        parts = progress_labels[value].split(" · ")
+        summary = parts[0]
+        if len(parts) > 1:
+            summary += f"；{parts[1].split()[0]}"
+        photo_labels[value] = f"第 {index}／{len(image_ids)} 張 · #{value}（{summary}）"
+    # Selectbox browser values are formatted labels. Progress can change while an
+    # older label is still in flight from an animal/eye/canvas interaction.
+    # Keep navigation by image ID, scoped to this annotation workspace, and
+    # translate any previously rendered label before Streamlit validates it.
+    workspace_key = str(output)
+    navigation = st.session_state.setdefault("eye_gt_photo_navigation", {}).setdefault(
+        workspace_key, {"image_id": image_ids[0], "label_ids": {}}
+    )
+    previous_workspace = st.session_state.get("eye_gt_photo_workspace")
+    selected = (
+        st.session_state.get("eye_gt_image", navigation["image_id"])
+        if previous_workspace in (None, workspace_key)
+        else navigation["image_id"]
+    )
+    if isinstance(selected, str):
+        selected = navigation["label_ids"].get(selected)
+    if selected not in image_ids:
+        selected = navigation["image_id"]
+    if selected not in image_ids:
+        selected = image_ids[0]
+    navigation["label_ids"].update({label: value for value, label in photo_labels.items()})
+    st.session_state["eye_gt_photo_workspace"] = workspace_key
+    # Explicitly synchronize the new display label, including on canvas reruns.
+    st.session_state["eye_gt_image"] = selected
     image_id = nav[0].selectbox(
         "選擇照片",
         image_ids,
         key="eye_gt_image",
-        format_func=lambda value: (
-            f"第 {image_ids.index(value) + 1}／{len(image_ids)} 張 · #{value}"
-        ),
+        format_func=photo_labels.get,
+    )
+    navigation["image_id"] = image_id
+    nav[0].caption(f"此照片：{progress_labels[image_id]}。")
+    nav[0].caption(
+        "進度依已儲存的最新版本更新；有輪廓或已填可見性才計入。"
+        "已標註包含待審核草稿；審核通過也不代表每眼均可量測。"
     )
     image_targets = [t for t in targets if int(t["image_id"]) == image_id]
     annotation_ids, markers, animal_labels = animal_choices(
@@ -272,6 +363,31 @@ def eye_mask_workspace(
         format_func=lambda value: "牠的左眼" if value == "left" else "牠的右眼",
         horizontal=True,
     )
+    with nav[2]:
+        st.markdown("**這張照片：逐眼狀態**")
+        st.table(
+            [
+                {
+                    "動物": animal_labels[value],
+                    "牠的左眼": eye_review_label(
+                        latest_annotation(rows, (image_id, value, "left"))
+                    ),
+                    "牠的右眼": eye_review_label(
+                        latest_annotation(rows, (image_id, value, "right"))
+                    ),
+                }
+                for value in annotation_ids
+            ]
+        )
+        st.caption("依已儲存的最新版本顯示；尚未儲存的操作不會改變狀態。")
+        with st.expander("狀態怎麼看？"):
+            st.markdown(
+                "- **待審核**：草稿或尚未確認，請對照原圖檢查。\n"
+                "- **需修正**：已判為不通過，且未標為看不到；請查看原因再處理。\n"
+                "- **已排除**：已確認看不到，並儲存為不通過。\n"
+                "- **審核通過**：輪廓已接受；能否量測仍以量測品質為準。\n"
+                "- **未標註**：尚未保存輪廓或可見性判讀。"
+            )
     target = next(t for t in image_targets if int(t["annotation_id"]) == annotation_id)
     image_record = dataset.images[image_id]
     source_path = (config.images / image_record.file_name).resolve()
@@ -303,6 +419,59 @@ def eye_mask_workspace(
         }
     draft = state_map[prefix]
     canvas_key = f"{prefix}_canvas_{draft['generation']}"
+
+    def stage_blurry_review(keys: list[tuple[int, int, str]]) -> None:
+        """Fill review fields in session drafts; never modify masks or saved revisions."""
+        for eye_key in keys:
+            eye_prefix = "eye_gt_" + hashlib.sha256(f"{output}:{eye_key}".encode()).hexdigest()[:18]
+            if eye_prefix not in state_map:
+                stored = latest_annotation(rows, eye_key)
+                state_map[eye_prefix] = {
+                    "geometry": load_geometry(output, stored)
+                    if stored
+                    else empty_geometry(
+                        image_record.width,
+                        image_record.height,
+                        dataset.annotations[eye_key[1]].bbox,
+                    ),
+                    "version": int(stored["annotation_version"]) if stored else 0,
+                    "record": dict(stored) if stored else {},
+                    "generation": 0,
+                }
+            eye_draft = state_map[eye_prefix]
+            reviewer_choice = st.session_state.get(eye_prefix + "_reviewer_choice")
+            if reviewer_choice is not None:
+                eye_draft["record"]["reviewer"] = (
+                    st.session_state.get(eye_prefix + "_reviewer", "")
+                    if reviewer_choice == "__custom__"
+                    else reviewer_choice
+                )
+            eye_draft["record"].update(BLUR_REVIEW_PRESET)
+            eye_draft["quick_fill_pending"] = True
+            for field, value in BLUR_REVIEW_PRESET.items():
+                st.session_state[eye_prefix + "_" + field] = value
+            st.session_state[eye_prefix + "_exclusion_reason_choice"] = "影像模糊"
+            st.session_state[eye_prefix + "_confirm"] = False
+
+    with nav[0].expander("整張照片快捷填寫"):
+        st.caption(
+            "套用到本照片全部眼睛（含已審核項目）：無法判斷、左右尚未確認、不可量測、"
+            "不通過，原因為影像模糊。保留輪廓；仍需逐眼按「儲存審核結果」才會寫入紀錄。"
+        )
+        if st.button("整張照片太模糊：全部眼睛", key=f"{workspace_key}_{image_id}_blur_all"):
+            stage_blurry_review([eye_key for eye_key in identities if eye_key[0] == image_id])
+            st.rerun()
+    pending_blur = sum(
+        bool(
+            state_map.get(
+                "eye_gt_" + hashlib.sha256(f"{output}:{eye_key}".encode()).hexdigest()[:18], {}
+            ).get("quick_fill_pending")
+        )
+        for eye_key in identities
+        if eye_key[0] == image_id
+    )
+    if pending_blur:
+        nav[0].warning(f"本照片有 {pending_blur} 隻眼睛已快捷填寫、尚未儲存。")
     with context:
         if st.button("重新載入此眼睛最新版本", key=prefix + "_reload"):
             draft.update(
@@ -310,6 +479,7 @@ def eye_mask_workspace(
                 version=int(row["annotation_version"]) if row else 0,
                 record=dict(row) if row else {},
                 generation=draft["generation"] + 1,
+                quick_fill_pending=False,
             )
             for field in (
                 "visibility",
@@ -329,7 +499,25 @@ def eye_mask_workspace(
             st.success(message)
         eye_label = "左眼" if side == "left" else "右眼"
         st.markdown(f"**目前標註：{animal_labels[annotation_id]} · 牠的{eye_label}**")
+        saved_status = eye_review_label(row)
+        message = f"已儲存狀態：{saved_status}"
+        if row and row["exclusion_reason"]:
+            message += f"。原因／備註：{row['exclusion_reason']}"
+        if saved_status == "需修正":
+            st.warning(message)
+        elif saved_status == "審核通過":
+            st.success(message)
+        else:
+            st.info(message)
         st.caption(f"已載入版本 {draft['version']} · v2 眼部遮罩")
+        if st.button("此眼影像模糊：自動填寫", key=prefix + "_blur"):
+            stage_blurry_review([key])
+            st.rerun()
+        if draft.get("quick_fill_pending"):
+            st.info(
+                "此眼已填入影像模糊的審核選項，尚未儲存。可調整後按「儲存審核結果」；"
+                "按「重新載入此眼睛最新版本」可取消未儲存的修改。"
+            )
         with st.expander("原圖動物對照（粗框為目前選取）", expanded=False):
             st.image(
                 render_instance_overlay(
@@ -485,7 +673,11 @@ def eye_mask_workspace(
                         expected_version=draft["version"],
                         protocol_version=protocol,
                     )
-                    draft.update(version=int(saved_row["annotation_version"]), record=saved_row)
+                    draft.update(
+                        version=int(saved_row["annotation_version"]),
+                        record=saved_row,
+                        quick_fill_pending=False,
+                    )
                     LOGGER.info(
                         json.dumps(
                             {

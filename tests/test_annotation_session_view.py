@@ -25,8 +25,71 @@ from animal_eye_metrology.annotation.annotation_session import (  # noqa: E402
 from animal_eye_metrology.annotation.eye_annotations import V2_PROTOCOL_VERSION  # noqa: E402
 from animal_eye_metrology.core.verification import sha256_file  # noqa: E402
 from animal_eye_metrology.data.coco import load_coco  # noqa: E402
+from animal_eye_metrology.ui.annotation_view import photo_progress_labels  # noqa: E402
 
 APP = Path(__file__).resolve().parents[1] / "app/streamlit_app.py"
+
+
+def test_photo_progress_uses_latest_revision_and_ignores_empty_drafts() -> None:
+    identities = [(10, 1001, "left"), (10, 1001, "right"), (20, 2001, "left")]
+    accepted = {
+        "image_id": "10",
+        "annotation_id": "1001",
+        "eye_side": "left",
+        "annotation_version": "1",
+        "mask_path": "synthetic.png",
+        "visibility": "Visible",
+        "mask_review_status": "Accepted",
+    }
+    rows = [
+        accepted | {"annotation_version": "2", "mask_review_status": "Pending"},
+        accepted,  # Older acceptance must not replace the latest draft.
+        accepted
+        | {
+            "eye_side": "right",
+            "mask_path": "",
+            "visibility": "",
+            "mask_review_status": "Pending",
+            "reviewer": "Synthetic Reviewer",
+        },
+    ]
+    assert photo_progress_labels(identities, rows) == {
+        10: "部分已標註 1/2 · 待審核 1",
+        20: "未標註 0/1",
+    }
+
+
+@pytest.mark.parametrize(
+    ("review", "visibility", "expected"),
+    [
+        ("Accepted", "Visible", "已標註 2/2 · 審核通過"),
+        ("Pending", "Visible", "已標註 2/2 · 待審核 1"),
+        ("Uncertain", "Uncertain", "已標註 2/2 · 待審核 1"),
+        ("Rejected", "Visible", "已標註 2/2 · 需修正 1"),
+        ("Rejected", "NotVisible", "已標註 2/2 · 已審閱 · 已排除 1"),
+    ],
+)
+def test_photo_progress_separates_review_and_exclusion(
+    review: str, visibility: str, expected: str
+) -> None:
+    left = {
+        "image_id": "10",
+        "annotation_id": "1001",
+        "eye_side": "left",
+        "annotation_version": "1",
+        "mask_path": "synthetic.png",
+        "visibility": "Visible",
+        "mask_review_status": "Accepted",
+    }
+    right = left | {
+        "eye_side": "right",
+        "mask_review_status": review,
+        "visibility": visibility,
+        "mask_path": "" if visibility == "NotVisible" else "synthetic-right.png",
+    }
+    assert photo_progress_labels([(10, 1001, "left"), (10, 1001, "right")], [left, right]) == {
+        10: expected
+    }
 
 
 @pytest.fixture
@@ -215,6 +278,144 @@ def test_radio_labels_keep_raw_review_values_and_eye_identity(
     ) == ("1002", "right", "Uncertain", "Pending")
 
 
+def test_photo_dropdown_progress_updates_after_save_without_changing_selection(
+    two_image_session: AnnotationSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prepare(two_image_session)
+    _environment(two_image_session, monkeypatch)
+    at = AppTest.from_string(
+        "from animal_eye_metrology.ui.annotation_workspace import annotation_workspace\n"
+        "from animal_eye_metrology.paths import PROJECT_ROOT\n"
+        "annotation_workspace(PROJECT_ROOT)",
+        default_timeout=30,
+    ).run()
+    at.selectbox(key="eye_gt_image").select(20).run()
+    next(b for b in at.button if b.label == "儲存草稿").click().run()
+    assert at.selectbox(key="eye_gt_image").value == 20
+    assert "未標註 0/4" in at.selectbox(key="eye_gt_image").options[1]
+    next(r for r in at.radio if r.label == "眼部可見性").set_value("NotVisible")
+    next(b for b in at.button if b.label == "儲存草稿").click().run()
+    assert not at.exception and not at.error
+    selector = at.selectbox(key="eye_gt_image")
+    assert selector.value == 20
+    assert "#10（未標註 0/4）" in selector.options[0]
+    assert "#20（部分已標註 1/4；待審核）" in selector.options[1]
+    assert any("此照片：部分已標註 1/4 · 待審核 1" in c.value for c in at.caption)
+    at.selectbox(key="eye_gt_image").select(10).run()
+    at.selectbox(key="eye_gt_image").select(20).run()
+    assert "部分已標註 1/4" in at.selectbox(key="eye_gt_image").options[1]
+
+
+def test_nonfirst_photo_stays_selected_when_switching_animals_and_eyes(
+    two_image_session: AnnotationSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prepare(two_image_session)
+    _environment(two_image_session, monkeypatch)
+    at = AppTest.from_string(
+        "from animal_eye_metrology.ui.annotation_workspace import annotation_workspace\n"
+        "from animal_eye_metrology.paths import PROJECT_ROOT\n"
+        "annotation_workspace(PROJECT_ROOT)",
+        default_timeout=30,
+    ).run()
+    at.selectbox(key="eye_gt_image").select(20).run()
+    for annotation_id, side in ((2002, "right"), (2001, "left"), (2002, "left")):
+        at.radio(key="eye_gt_annotation_20").set_value(annotation_id).run()
+        assert at.selectbox(key="eye_gt_image").value == 20
+        at.radio(key="eye_gt_side").set_value(side).run()
+        assert not at.exception and not at.error
+        assert at.selectbox(key="eye_gt_image").value == 20
+        assert at.radio(key="eye_gt_annotation_20").value == annotation_id
+        assert at.radio(key="eye_gt_side").value == side
+    assert status(two_image_session)["saved_eyes"] == 0
+
+
+@pytest.mark.parametrize("trigger", ["animal", "eye", "canvas_rerun"])
+def test_stale_photo_progress_wire_label_does_not_reset_photo(
+    two_image_session: AnnotationSession, monkeypatch: pytest.MonkeyPatch, trigger: str
+) -> None:
+    """A browser may resend its prior display label after another save changes progress."""
+    from animal_eye_metrology.annotation.eye_annotations import (
+        empty_geometry,
+        load_targets,
+        save_annotation,
+    )
+
+    session = two_image_session
+    prepare(session)
+    _environment(session, monkeypatch)
+    at = AppTest.from_string(
+        "from animal_eye_metrology.ui.annotation_workspace import annotation_workspace\n"
+        "from animal_eye_metrology.paths import PROJECT_ROOT\n"
+        "annotation_workspace(PROJECT_ROOT)",
+        default_timeout=30,
+    ).run()
+    at.selectbox(key="eye_gt_image").select(20).run()
+    stale_label = at.selectbox(key="eye_gt_image").options[1]
+
+    dataset = load_coco(session.source.parent / "annotations.json")
+    targets = load_targets(session.proposal, dataset)
+    save_annotation(
+        session.ground_truth,
+        targets,
+        (20, 2001, "left"),
+        empty_geometry(100, 80, dataset.annotations[2001].bbox),
+        {
+            "visibility": "NotVisible",
+            "side_confirmed": "Unknown",
+            "measurement_quality": "Unknown",
+            "mask_review_status": "Pending",
+            "reviewer": "Synthetic concurrent reviewer",
+            "exclusion_reason": "Synthetic external save",
+        },
+        expected_version=0,
+    )
+    at.radio(key="eye_gt_annotation_20").set_value(2002).run()
+    assert at.selectbox(key="eye_gt_image").value == 20
+    assert at.selectbox(key="eye_gt_image").options[1] != stale_label
+
+    # AppTest normally rewrites wire values using the newest formatter, hiding the
+    # real-browser case where a neighboring control resends the previous label.
+    if trigger == "animal":
+        at.radio(key="eye_gt_annotation_20").set_value(2001)
+    elif trigger == "eye":
+        at.radio(key="eye_gt_side").set_value("right")
+    states = at._tree.get_widget_states()
+    photo_widget_id = at.selectbox(key="eye_gt_image").id
+    photo_state = next(state for state in states.widgets if state.id == photo_widget_id)
+    photo_state.string_value = stale_label
+    at._run(states)
+
+    assert not at.exception and not at.error
+    assert at.selectbox(key="eye_gt_image").value == 20
+    assert at.radio(key="eye_gt_annotation_20").value == (2001 if trigger == "animal" else 2002)
+    assert at.radio(key="eye_gt_side").value == ("right" if trigger == "eye" else "left")
+    assert "部分已標註 1/4" in at.selectbox(key="eye_gt_image").options[1]
+    assert status(session)["saved_eyes"] == 1
+
+
+def test_photo_selection_survives_annotation_panel_widget_cleanup(
+    two_image_session: AnnotationSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The main app conditionally renders tabs, so hidden controls may lose widget state."""
+    prepare(two_image_session)
+    _environment(two_image_session, monkeypatch)
+    at = AppTest.from_string(
+        "import streamlit as st\n"
+        "from animal_eye_metrology.ui.annotation_workspace import annotation_workspace\n"
+        "from animal_eye_metrology.paths import PROJECT_ROOT\n"
+        "if st.checkbox('Show annotation panel', value=True, key='show_panel'):\n"
+        "    annotation_workspace(PROJECT_ROOT)",
+        default_timeout=30,
+    ).run()
+    at.selectbox(key="eye_gt_image").select(20).run()
+    at.checkbox(key="show_panel").uncheck().run()
+    assert not at.selectbox
+    at.checkbox(key="show_panel").check().run()
+    assert not at.exception and not at.error
+    assert at.selectbox(key="eye_gt_image").value == 20
+    assert status(two_image_session)["saved_eyes"] == 0
+
+
 def test_review_dropdown_custom_values_round_trip(
     annotation_session: AnnotationSession,  # noqa: F811
     monkeypatch: pytest.MonkeyPatch,
@@ -285,3 +486,183 @@ def test_reviewer_remembered_across_photos_and_eyes(
     at.radio(key="eye_gt_annotation_10").set_value(1002).run()
     assert reviewer().value == "Bob"
     assert not at.exception and not at.error
+
+
+def _seed_reviewed_eye(session: AnnotationSession, key: tuple[int, int, str]) -> dict:
+    """Seed a small accepted synthetic mask so presets must preserve real content."""
+    from animal_eye_metrology.annotation.eye_annotations import (
+        empty_geometry,
+        load_targets,
+        save_annotation,
+    )
+
+    dataset = load_coco(session.source.parent / "annotations.json")
+    geometry = empty_geometry(100, 80, dataset.annotations[key[1]].bbox)
+    geometry["contours"] = [{"operation": "add", "points": [[3, 3], [8, 3], [8, 7], [3, 7]]}]
+    save_annotation(
+        session.ground_truth,
+        load_targets(session.proposal, dataset),
+        key,
+        geometry,
+        {
+            "visibility": "Visible",
+            "side_confirmed": "Yes",
+            "measurement_quality": "Pass",
+            "mask_review_status": "Accepted",
+            "reviewer": "Synthetic saved reviewer",
+            "exclusion_reason": "Synthetic original review",
+        },
+        expected_version=0,
+    )
+    return geometry
+
+
+def _assert_blur_form(at: AppTest) -> None:
+    assert not at.exception and not at.error
+    for label, expected in (
+        ("眼部可見性", "Uncertain"),
+        ("左右眼判斷", "Unknown"),
+        ("量測品質", "Fail"),
+        ("輪廓審核結果", "Rejected"),
+    ):
+        assert next(w for w in at.radio if w.label == label).value == expected
+    assert next(w for w in at.selectbox if w.label == "原因／備註").value == "影像模糊"
+    assert not next(w for w in at.checkbox if w.label == "我已確認眼側及輪廓符合規範").value
+
+
+def test_blur_current_eye_stages_only_and_preserves_geometry_reviewer_and_version(
+    two_image_session: AnnotationSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session = two_image_session
+    prepare(session)
+    geometry = _seed_reviewed_eye(session, (10, 1001, "left"))
+    _environment(session, monkeypatch)
+    at = AppTest.from_string(
+        "from animal_eye_metrology.ui.annotation_workspace import annotation_workspace\n"
+        "from animal_eye_metrology.paths import PROJECT_ROOT\n"
+        "annotation_workspace(PROJECT_ROOT)",
+        default_timeout=30,
+    ).run()
+    next(w for w in at.selectbox if w.label == "標註／審核者").select("__custom__").run()
+    next(w for w in at.text_input if w.label == "其他審核者姓名").input(
+        "Synthetic unsaved reviewer"
+    ).run()
+    next(w for w in at.checkbox if w.label == "我已確認眼側及輪廓符合規範").check().run()
+    before = _files(session.directory)
+    prefix = next(iter(at.session_state["eye_gt_drafts"]))
+
+    next(w for w in at.button if w.label == "此眼影像模糊：自動填寫").click().run()
+    _assert_blur_form(at)
+    assert _files(session.directory) == before
+    draft = at.session_state["eye_gt_drafts"][prefix]
+    assert draft["geometry"] == geometry and draft["version"] == 1
+    assert draft["quick_fill_pending"] is True
+    reviewer = next(w for w in at.selectbox if w.label == "標註／審核者")
+    assert reviewer.value == "Synthetic unsaved reviewer" or (
+        reviewer.value == "__custom__"
+        and next(w for w in at.text_input if w.label == "其他審核者姓名").value
+        == "Synthetic unsaved reviewer"
+    )
+
+    at.radio(key="eye_gt_side").set_value("right").run()
+    assert next(w for w in at.radio if w.label == "眼部可見性").value is None
+    at.radio(key="eye_gt_side").set_value("left").run()
+    _assert_blur_form(at)
+    next(w for w in at.button if w.label == "儲存審核結果").click().run()
+    assert not at.exception and not at.error
+    with (session.ground_truth / "eye_mask_annotations.csv").open(newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 2
+    assert rows[-1]["annotation_version"] == "2"
+    assert rows[-1]["reviewer"] == "Synthetic unsaved reviewer"
+    assert rows[-1]["mask_review_status"] == "Rejected"
+    assert rows[-1]["visibility"] == "Uncertain"
+    assert rows[-1]["measurement_quality"] == "Fail"
+    assert rows[-1]["exclusion_reason"] == "影像模糊"
+    assert rows[-1]["mask_path"]
+    assert not at.session_state["eye_gt_drafts"][prefix]["quick_fill_pending"]
+
+
+def test_blur_whole_photo_persists_across_eyes_without_touching_another_photo(
+    two_image_session: AnnotationSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session = two_image_session
+    prepare(session)
+    geometry = _seed_reviewed_eye(session, (20, 2001, "left"))
+    _environment(session, monkeypatch)
+    at = AppTest.from_string(
+        "from animal_eye_metrology.ui.annotation_workspace import annotation_workspace\n"
+        "from animal_eye_metrology.paths import PROJECT_ROOT\n"
+        "annotation_workspace(PROJECT_ROOT)",
+        default_timeout=30,
+    ).run()
+    at.selectbox(key="eye_gt_image").select(20).run()
+    before = _files(session.directory)
+    next(w for w in at.button if w.label == "整張照片太模糊：全部眼睛").click().run()
+    for annotation_id in (2001, 2002):
+        at.radio(key="eye_gt_annotation_20").set_value(annotation_id).run()
+        for side in ("left", "right"):
+            at.radio(key="eye_gt_side").set_value(side).run()
+            _assert_blur_form(at)
+            assert at.selectbox(key="eye_gt_image").value == 20
+    assert _files(session.directory) == before
+    drafts = at.session_state["eye_gt_drafts"]
+    assert sum(bool(d.get("quick_fill_pending")) for d in drafts.values()) == 4
+    accepted_draft = next(d for d in drafts.values() if d["version"] == 1)
+    assert accepted_draft["geometry"] == geometry
+    assert accepted_draft["record"]["reviewer"] == "Synthetic saved reviewer"
+
+    at.selectbox(key="eye_gt_image").select(10).run()
+    at.radio(key="eye_gt_side").set_value("left").run()
+    assert next(w for w in at.radio if w.label == "眼部可見性").value is None
+    assert next(w for w in at.radio if w.label == "輪廓審核結果").value is None
+    at.selectbox(key="eye_gt_image").select(20).run()
+    at.radio(key="eye_gt_annotation_20").set_value(2001).run()
+    _assert_blur_form(at)
+    next(w for w in at.button if w.label == "重新載入此眼睛最新版本").click().run()
+    assert next(w for w in at.radio if w.label == "眼部可見性").value == "Visible"
+    assert (
+        sum(bool(d.get("quick_fill_pending")) for d in at.session_state["eye_gt_drafts"].values())
+        == 3
+    )
+    assert _files(session.directory) == before
+
+
+def test_blur_preset_does_not_bypass_concurrent_revision_check(
+    two_image_session: AnnotationSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from animal_eye_metrology.annotation.eye_annotations import load_targets, save_annotation
+
+    session = two_image_session
+    prepare(session)
+    geometry = _seed_reviewed_eye(session, (10, 1001, "left"))
+    _environment(session, monkeypatch)
+    at = AppTest.from_string(
+        "from animal_eye_metrology.ui.annotation_workspace import annotation_workspace\n"
+        "from animal_eye_metrology.paths import PROJECT_ROOT\n"
+        "annotation_workspace(PROJECT_ROOT)",
+        default_timeout=30,
+    ).run()
+    dataset = load_coco(session.source.parent / "annotations.json")
+    save_annotation(
+        session.ground_truth,
+        load_targets(session.proposal, dataset),
+        (10, 1001, "left"),
+        geometry,
+        {
+            "visibility": "Visible",
+            "side_confirmed": "Yes",
+            "measurement_quality": "Pass",
+            "mask_review_status": "Accepted",
+            "reviewer": "Synthetic concurrent reviewer",
+            "exclusion_reason": "Synthetic newer review",
+        },
+        expected_version=1,
+    )
+    after_external_save = _files(session.directory)
+    next(w for w in at.button if w.label == "此眼影像模糊：自動填寫").click().run()
+    _assert_blur_form(at)
+    next(w for w in at.button if w.label == "儲存審核結果").click().run()
+    assert not at.exception
+    assert any("另一個視窗更新" in message.value for message in at.error)
+    assert _files(session.directory) == after_external_save

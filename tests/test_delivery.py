@@ -106,6 +106,13 @@ def test_published_guides_cannot_depend_on_a_local_research_archive(shareable_co
     )
 
 
+def test_reviewed_evidence_detects_changed_predictions(shareable_copy: Path) -> None:
+    path = shareable_copy / "examples/reviewed_validation/predictions.json"
+    path.write_text(path.read_text() + "\n")
+    result = delivery.check_delivery(shareable_copy)
+    assert status(result, "reviewed_evaluation_evidence") is False
+
+
 @pytest.mark.parametrize("change", ["bytes", "geometry", "qualification", "empty"])
 def test_recorded_sample_detects_tampering_and_invalid_geometry(
     shareable_copy: Path, change: str
