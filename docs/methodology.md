@@ -14,6 +14,20 @@
 `5408bc76f5b848cf925a0d1857899011d8c5b497`。三個權重的 SHA-256 在推論設定中固定。
 CPU FP32、seed 42、4 threads；套件鎖定與安裝紀錄用於重現環境。
 
+### Selection Trade-offs
+
+最終選型以完成可重現的端到端交付為目標。YOLO26s-seg 已接入眼部定位、分割與量測，
+既有 CPU 流程也完成 UI／API、Linux amd64 Docker 與實際圖片的工程驗證，因此保留為固定基線。
+第一輪同組評估中，原始 YOLO26s-seg 的 AP 高於 YOLO11n-seg（51.21）與 YOLO26n-seg（53.07），
+支持它作為本案 YOLO 系列基線；但不代表它是所有候選中 AP 最高的模型。原始 Mask R-CNN v2 的 AP 為 66.77，
+高於原始 YOLO26s-seg 的 63.71。專案尚未完成兩者在相同條件下的端到端眼距誤差與部署成本比較，
+因此不宣稱 YOLO 更快、成本更低，或比 Mask R-CNN 更適合所有場景。
+
+HRNet 的作用是提供帶解剖左右語意的眼點，SAM 再依眼點與固定 ROI 產生輪廓，
+讓「眼睛在哪裡」與「哪些像素屬於眼睛」分開處理。最後以遮罩重心量測，
+不把 HRNet 點當作重心或瞳孔中心。保留原始權重的證據與限制見
+[Training](training.md#why-the-original-weights-remain)；上述工程驗證不等於獨立準確度驗收。
+
 ## Data and Eye Definition
 
 示範取自 COCO 2017 validation，圖片至少包含兩個動物實例；提交範例為 `125405` 的兩隻狗。
