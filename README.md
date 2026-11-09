@@ -178,20 +178,45 @@ PY
 ## Docker
 
 目標為 **Linux amd64、CPU**；UI 與 API 共用同一映像、各自執行程序。
-需要已啟動的 Docker Engine／Desktop、Compose v2 與 Python 3.11（只用於下載／核對權重）。
-建置需連網並編譯 MMCV，首次耗時較長。Apple Silicon 會模擬 amd64，建置與推論速度可能較慢。
-請先依上方 COCO Example 取得示範圖，或準備自己的多動物 JPEG／PNG。
+取得儲存庫或解壓交件 ZIP 後，進入包含 `compose.yaml` 的專案根目錄，依序執行以下步驟。
+下列指令使用 macOS／Linux shell；Docker 模式**不需要先執行 Local Setup 或建立本機 `.runtime/`**，
+兩套模型環境都由 Docker 建置。
+
+### Prerequisites
+
+| 項目 | 準備方式與範圍 |
+| --- | --- |
+| Docker | 安裝並啟動 Docker Engine／Desktop，確認 `docker info` 成功；需 Compose v2，可用 `docker compose version` 檢查 |
+| 主機 Python | 需要 Python 3.11，確認 `python3.11 --version`；只用於下載／核對權重與示範圖，不需先安裝模型套件 |
+| 網路與建置時間 | 首次需下載基礎映像、固定套件、模型程式碼與權重，並編譯 MMCV，請預留時間 |
+| 平台 | 已完整驗證 Linux amd64／CPU；Apple Silicon 使用 amd64 模擬，可能較慢，尚未完成相同的完整容器驗證；Linux arm64 原生映像／GPU 不在驗證範圍 |
+| 圖片 | 先依 [COCO Example](#coco-example) 下載並核對示範圖；也可自備多動物 JPEG／PNG 上傳，但下方自動檢查使用指定示範圖 |
+
+### Build and Start
+
+以下採 `.env.example` 的預設埠號與目錄。若已有 `.env`，保留原設定並參閱下方路徑說明。
 
 ```sh
-cp .env.example .env
+if [ ! -f .env ]; then cp .env.example .env; fi
+mkdir -p weights data outputs
 python3.11 scripts/prepare_models.py --download
+docker compose config --quiet
 docker compose build
-docker compose up
+docker compose up -d --wait --wait-timeout 180
+docker compose ps
 ```
 
+`docker compose config --quiet` 成功時沒有輸出；權重準備的三個模型應皆為 `ready`。
+啟動後確認 `ui`、`api` 皆為 `healthy`。若啟動失敗或等待逾時，先查看 `docker compose logs --tail=100`。
 UI：[localhost:8517](http://127.0.0.1:8517)；API：[localhost:8000/docs](http://127.0.0.1:8000/docs)。
-預設只綁定主機 `127.0.0.1`。`weights/`、`data/` 唯讀掛載，`outputs/` 保存結果，
-停止容器後仍保留。埠號與掛載路徑可在 `.env` 調整。
+上傳圖片後即可執行推論、檢視遮罩與兩類距離，並下載結果。
+
+`-d` 代表背景啟動，可以繼續在同一終端機執行檢查；若使用 `docker compose up` 前景模式，
+請另開終端機並進入同一專案目錄執行後續指令。
+
+### Verify and Stop
+
+服務啟動後，依序核對模型、容器測試及真實圖片推論：
 
 ```sh
 docker compose run --rm api python scripts/check_runtime.py \
@@ -200,13 +225,48 @@ docker compose run --rm api python -m pytest -q
 docker compose exec -T api python scripts/smoke_api.py \
   --image data/000000125405.jpg --report outputs/api_smoke.json
 docker compose logs --tail=100
+```
+
+模型檢查應回報 `ready`，測試不應有失敗，smoke 報告應為 `passed`。
+smoke 包含真實圖片、兩種距離、CSV／PNG 下載、無效圖片及無動物圖片；預設報告存於主機
+`outputs/api_smoke.json`。使用自己的圖片上傳不需要這份自動檢查，但不能用任意圖片替代其固定示範輸入。
+
+展示完成後停止服務：
+
+```sh
 docker compose down
 ```
 
-建置會安裝固定套件與模型程式碼；推論不下載資料。Linux arm64／GPU 不在目前驗證範圍。
-CI 提供輕量測試與選擇性 CPU 容器檢查；這些工程檢查不代替模型準確度驗證。
-容器 smoke 檢查包含真實圖片、兩種距離、CSV／PNG 下載、無效圖片及無動物圖片。
-報告保存在主機 `outputs/api_smoke.json`；Docker 模式不需要先建立本機 `.runtime/`。
+### Ports and Data Paths
+
+預設只綁定主機 `127.0.0.1`，供執行 Docker 的電腦使用，**不是外網公開網站**。
+若預設埠號已被占用，可修改 `.env` 的 `UI_PORT`／`API_PORT`，再執行啟動指令，並使用新的瀏覽器埠號。
+容器內埠號仍為 8517／8000，因此上述透過 `docker compose exec` 執行的 smoke 指令不需跟著改埠號。
+
+| `.env` 設定 | 主機預設位置 | 容器位置與用途 |
+| --- | --- | --- |
+| `WEIGHTS_DIRECTORY` | `./weights` | `/app/weights`，唯讀模型權重 |
+| `DATA_DIRECTORY` | `./data` | `/app/data`，唯讀輸入資料 |
+| `OUTPUTS_DIRECTORY` | `./outputs` | `/app/outputs`，保存結果；停止或移除容器後仍保留在主機 |
+
+若把 `WEIGHTS_DIRECTORY` 改成 `./custom-weights`，下載時也必須指定相同位置：
+
+```sh
+python3.11 scripts/prepare_models.py --download --directory ./custom-weights
+```
+
+`prepare_models.py` 不會自動讀取 `.env`。自訂 `DATA_DIRECTORY` 時，將示範圖放入該目錄根層；
+自訂 `OUTPUTS_DIRECTORY` 時，smoke 報告會保存在該目錄。上述容器內的 `data/`、`outputs/` 指令路徑維持不變。
+請先建立自訂目錄，並確認輸出目錄可寫入。
+
+### Validation Scope
+
+上傳推論不需要人工標註工作區；使用「眼睛標註與審核」前，另依 [Eye Annotation](docs/eye_annotation.md#data-preparation)
+準備 COCO JSON 與原圖。Docker 不會自動下載完整資料集或本機歷史工作區。
+
+目前交付程式內容已通過 [Linux amd64 容器驗證](https://github.com/PolunLin/animal-eye-metrology/actions/runs/42669689398)：
+建置、三模型載入、353 項容器測試與 10 項 API／推論下載檢查成功。
+CI 的 CPU 容器檢查為選擇性執行，不能把略過當通過；工程檢查也不代替模型準確度或全部人工標註互動的驗收。
 
 ## Validation
 
