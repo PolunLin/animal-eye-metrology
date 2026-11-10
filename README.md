@@ -103,8 +103,31 @@ YOLO26s-seg → HRNet-W32／AP-10K → SAM 2.1 Tiny、A_r100 固定流程；
 
 三個模型分別負責不同子任務。專案包含動物分割微調、學習率診斷與再評估；
 目前推論仍採原始預訓練權重。方法、歷史結果及重現命令見 [Training](docs/training.md)。
-介面的「訓練與實驗」頁籤可查看保存結果、曲線與下載比較 CSV。
+介面的「訓練與實驗」頁籤預設顯示最新大型訓練比較表、保留原始權重的原因與比較 CSV 下載；
+亦可切換早期小樣本實驗、曲線與紀錄。最新擴大實驗摘要見下節。
 應用使用 Torch 2.9.1，HRNet 使用 Torch 2.2.2／MMCV 2.1.0，以兩個 Python 環境隔離相依。
+
+## Latest Training Result and Model Decision
+
+2026-11-09 已完成 YOLO26s-seg 擴大微調：COCO train2017 **7,727 張訓練／950 張 development／950 張 holdout**，
+從原始預訓練權重開始，訓練 3 epochs、11,592 次更新。下表為十動物類的 COCO Mask AP@[.50:.95]（0–100），
+各欄均在同一組圖片上比較原始模型與最佳微調 epoch：
+
+| YOLO26s-seg 權重 | Development AP（950 張，供選模） | Holdout AP（950 張，選模凍結後評估） |
+| --- | ---: | ---: |
+| 原始預訓練 | **58.38** | **59.01** |
+| 微調最佳 epoch 1 | 53.68 | 54.68 |
+| 微調 − 原始（AP 點） | −4.70 | −4.33 |
+
+**最終保留原始權重：**微調未超過原始模型的 development AP，因此在 holdout 推論前就凍結選擇為原始模型；
+後續 holdout 比較也未顯示改善。微調權重已匯出保存，但沒有切換至正式推論。
+動物分割 AP 不代表眼部遮罩或眼距精度，替換權重後的端到端眼距比較也尚未完成。
+正式流程維持原始 YOLO26s-seg → HRNet-W32／AP-10K → SAM 2.1 Tiny、A_r100。
+
+這是單一 seed 的專案留出評估；COCO train2017 可能已用於上游預訓練，不能稱為模型完全未見的獨立測試。
+也不能與較早 fresh64 的 AP 差異直接混比。[完整設定、逐 epoch 結果與限制](docs/training.md#expanded-yolo26s-experiment)、
+[保存結果](examples/training/expanded_yolo26s_job_status.json) 與 [選模凍結紀錄](examples/training/expanded_yolo26s_selection.json)
+提供核對依據。本節整理既有實驗，沒有重新訓練或評估。
 
 ## Local Setup
 
@@ -310,7 +333,8 @@ CI 的 CPU 容器檢查為選擇性執行，不能把略過當通過；工程檢
 上述歷史評分、本頁單圖展示與本次 26 圖開發驗證是不同紀錄，不混合比較或據此宣稱模型進步。
 歷史 [評估摘要](examples/evaluation_summary.csv) 不含完整人工 GT 與預測遮罩，完整重算需另備原始證據；
 本次 [26 圖驗證包](examples/reviewed_validation/README.md#replay-scores) 則提供無損參考／預測遮罩，可直接重播評分。
-訓練紀錄屬補充實驗，正式推論仍使用固定原始權重；選型與保留基線的理由見 [Methodology](docs/methodology.md#model-choice)。
+訓練紀錄屬補充實驗，正式推論仍使用固定原始權重；[模型選型](docs/methodology.md#model-choice) 與
+[最新訓練後保留原始權重的理由](docs/training.md#why-the-original-weights-remain) 分別說明架構與權重決策。
 
 ## Repository Layout
 

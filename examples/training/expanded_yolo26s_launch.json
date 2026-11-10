@@ -1,0 +1,24 @@
+{
+  "launched_at_utc": "2026-11-09T12:00:44.452503+00:00",
+  "pid": 17771,
+  "keep_awake_pid": 17772,
+  "command": [
+    ".runtime/app/bin/python",
+    "outputs/training/yolo26s_expanded_20261109_v1/run_experiment.py",
+    "run",
+    "--config",
+    "outputs/training/yolo26s_expanded_20261109_v1/training.toml"
+  ],
+  "working_directory": ".",
+  "environment_overrides": {
+    "PYTHONPATH": "outputs/training/yolo26s_expanded_20261109_v1/provenance:outputs/training/yolo26s_expanded_20261109_v1/provenance/source",
+    "PYTHONUNBUFFERED": "1",
+    "PYTORCH_ENABLE_MPS_FALLBACK": "0",
+    "YOLO_CONFIG_DIR": "outputs/training/yolo26s_expanded_20261109_v1/runtime_cache/ultralytics",
+    "YOLO_OFFLINE": "true",
+    "YOLO_AUTOINSTALL": "false",
+    "WANDB_DISABLED": "true"
+  },
+  "source": "approved data and original YOLO26s-seg weights",
+  "formal_inference_weights_replaced": false
+}

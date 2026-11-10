@@ -1,10 +1,86 @@
 # Training and Experiments
 
 專案包含動物實例分割監督式微調、development-only 學習率診斷，以及選模凍結後的驗收。
-本頁記載 2026-11-08 的既有實驗；恢復程式與頁面沒有重新訓練，也沒有替換推論權重。
+本頁記載 2026-11-08 的小樣本實驗與 2026-11-09 完成的 YOLO26s-seg 擴大訓練。
+2026-11-10 文件整理只引用保存產物，沒有重新訓練、評估或替換推論權重。
 HRNet-W32／AP-10K 與 SAM 2.1 Tiny 在此流程使用預訓練模型，沒有眼部模型訓練。
 
-## Recorded Results
+## Expanded YOLO26s Experiment
+
+實驗 ID：`yolo26s_expanded_20261109_v1`。2026-11-09 22:33（Asia/Taipei）完成訓練、最終評估及原生權重匯出。
+這裡的「擴大」是相對下節早期小樣本實驗，不是完整 COCO 訓練或新的模型架構。
+
+### Dataset and Configuration
+
+| 項目 | 保存設定與範圍 |
+| --- | --- |
+| 資料來源 | COCO 2017 train2017；官方 `instances_train2017.json` |
+| 選圖條件 | 至少兩個非 crowd 動物；任一類含 crowd 的圖排除；保留同圖所有類別原始標註 |
+| 已核准切分 | Fitting 7,727 圖／42,136 instances；development 950 圖／5,123 instances；holdout 950 圖／5,167 instances；instances 包含所有保留類別 |
+| 資料隔離 | 檔案／RGB 雜湊相同或 dHash 距離 ≤ 2 作傳遞分組；影像與群組不跨切分。原 fitting256 全數保留於訓練；舊 development／holdout 群組與涉及 val2017／應用參考的群組隔離 |
+| 隨機種子 | 切分 seed 20261109；訓練 seed 42；按已核准 assignment 凍結資料，不重新抽樣 |
+| 初始化與版本 | 原始 YOLO26s-seg；Ultralytics 8.4.0、Torch 2.9.1；不接續前輪微調權重 |
+| 訓練 | 3 epochs、11,592 optimizer steps；batch 2、img640、FP32；SGD LR 1e-5、momentum 0.9、weight decay 0.0005、clip norm 10 |
+| 凍結與遮罩 | 前 10 blocks 與 DFL 凍結、BatchNorm running stats 固定；保留 80 類 head；遮罩 nearest resize、影像 float32 resize |
+| 裝置 | macOS arm64／MPS 訓練；CPU、4 threads 評估；停用 MPS operator fallback |
+| 評估 | 官方 COCOeval segm AP@[.50:.95]、十動物類、maxDets 1/10/100、confidence floor .001、原圖遮罩；下表 AP 為 0–100 |
+
+實際執行使用凍結的程式快照與 MPS semantic-target 相容處理，保留原始 mask crop。
+本輪同時改變資料與切分、更新次數及訓練裝置，**不是 LR-only 對照**；不能與早期 fresh64 的結果直接相減，
+也不能把表現差異單獨歸因於資料量或裝置。
+
+### Results and Selection Order
+
+| 比較對象 | Development AP（同一組 950 圖） | Holdout AP（同一組 950 圖） |
+| --- | ---: | ---: |
+| 原始預訓練 | **58.3816** | **59.0077** |
+| 微調最佳 epoch 1 | 53.6778 | 54.6751 |
+| 微調 − 原始（AP 點） | −4.7037 | −4.3325 |
+
+差值由未四捨五入值計算。逐 epoch 的 development 結果如下；holdout 不用於選 epoch 或調參：
+
+| Epoch | Mean training loss | Development Mask AP |
+| --- | ---: | ---: |
+| 1 | 3.281298 | **53.6778** |
+| 2 | 3.271877 | 53.5429 |
+| 3 | 3.342452 | 53.5671 |
+
+1. 比較原始模型與三個訓練 epoch 的 development AP；最佳訓練 checkpoint 為 epoch 1，但仍低於原始模型。
+2. 在首次最終 holdout 推論前寫入 `selection_frozen.json`，選定 `pretrained`；同分規則也是保留原始模型。
+3. 凍結後才在同一組 950 張 holdout 比較原始與最佳微調權重，記錄 −4.3325 AP 點；沒有用 holdout 重新選模。
+4. 保存並匯出微調候選，正式推論仍使用原始權重。`best.pt` 代表最佳「訓練 epoch」，不代表優於原始模型或已部署。
+
+[保存結果與逐 epoch 數值](../examples/training/expanded_yolo26s_job_status.json)、
+[選模凍結紀錄](../examples/training/expanded_yolo26s_selection.json) 與
+[完成核對紀錄](../examples/training/expanded_yolo26s_completion.json) 提供未四捨五入數值及雜湊。
+完成核對記載 37 項檢查通過，涵蓋切分、步數、選模、評估紀錄、匯出及原始權重未變；
+這是保存的產物核對結果，不是本次重新訓練、重跑 AP 或獨立泛化驗收。
+
+### Interpretation and Reproduction Boundary
+
+本輪觀察支持「這份配方產生的微調候選未改善動物分割 AP」，不足以證明所有微調方法都無效，
+也不能僅憑這組數值判定退步的原因。只有單一訓練 seed、3 epochs，未估計信賴區間。
+COCO train2017 可能已用於上游預訓練；holdout 是本專案隔離的資料，不代表原始模型從未見過。
+動物 AP 不等同眼部定位、眼遮罩或眼距誤差；本輪沒有以微調權重完成端到端眼距比較。
+
+原始資料 manifest SHA-256：`e9b46ec855db6e2cc4d6f6c753071ef65341e73f324159e20de0bd194f2bd5c2`；
+訓練設定 SHA-256：`37ff6f79f8dacec4aae731a687bbdb81f5d4597df1d12793e230facff3cc95c6`。
+完整 assignment、GT、預測、權重、`training.toml` 及程式快照保存於本機
+`outputs/training/yolo26s_expanded_20261109_v1/`，不納入 Git。
+
+以下只記錄當時從專案根目錄啟動的命令；完整參數與環境變數見
+[啟動紀錄](../examples/training/expanded_yolo26s_launch.json)。這不是乾淨 checkout 可直接執行的重現指令，
+需要上述本機完整實驗包；重新執行須另建輸出並核對資料與程式雜湊，不覆寫這份歷史產物。
+
+```sh
+.runtime/app/bin/python outputs/training/yolo26s_expanded_20261109_v1/run_experiment.py \
+  run --config outputs/training/yolo26s_expanded_20261109_v1/training.toml
+```
+
+公開精簡紀錄可核對結果與選模依據，但不含足以獨立重算本輪 AP 的完整預測與標註。
+下方 Execution 是早期小樣本流程，不能用來宣稱重現這次擴大訓練。
+
+## Earlier Small-Sample Results
 
 第一輪使用 256 fitting／64 development／64 internal holdout，每模型 3 epochs、384 updates。
 
@@ -37,8 +113,12 @@ Mask-only 對照只增加約 1.13 AP points，仍低於初始化，未充分解�
 ## Why the Original Weights Remain
 
 微調實驗用來檢查訓練配方與動物分割表現，是否替換交付權重則需要整條量測流程的證據。
-YOLO26s-seg 第二輪在同一組 fresh64 上由 61.81 AP 增至 62.10 AP，依未四捨五入值計算增加 0.28 點；
-這是單 seed、小樣本的觀察，尚不足以證明穩定改善，也不能推論眼點、眼部遮罩或距離誤差會改善。
+最新擴大實驗的 development AP 為原始 58.3816、最佳微調 53.6778，未達替換原始模型的條件，
+因此先凍結選擇為原始權重。隨後同組 950 張 holdout 的 AP 為 59.0077 對 54.6751，也未顯示微調改善。
+這個順序避免看過 holdout 才回頭決定選哪個模型。
+
+早期第二輪 YOLO26s-seg 在另一組 fresh64 上曾增加 0.28 AP 點；這是不同資料上的單 seed、小樣本觀察，
+不能與最新 950 張評估混合比較，也不足以證明穩定改善或推論眼距誤差會降低。
 
 動物框改變會影響後續 HRNet 輸入與 SAM 提示區域。專案尚未完成替換微調權重後，
 與原始權重在同一固定眼部參考上的端到端誤差、缺失率及部署回歸比較。
@@ -49,6 +129,8 @@ HRNet-W32／AP-10K 與 SAM 2.1 Tiny 也維持原始預訓練權重，本專案�
 後續若要替換模型或權重，需先確認資料切分與端到端驗收方式；本次交件不自動啟動新訓練。
 
 ## Dataset and Method
+
+本節說明 2026-11-08 早期小樣本流程；最新擴大實驗的資料與設定另列於上方。
 
 - 來源：COCO 2017 train2017，官方 `annotations_trainval2017.zip` 中的 `annotations/instances_train2017.json`。
 - 候選：至少兩個非 crowd 動物；任一類含 crowd 的圖排除；保留同圖所有類別原始標註，不把人物刪成背景。
@@ -88,6 +170,7 @@ python3.11 -m venv .runtime/train26
 
 ## Execution
 
+本節指令適用早期 pilot／recovery 流程，不是擴大實驗的 launcher。
 在專案根目錄執行。準備既有 `data/train2017/` 原圖與根目錄的 `annotations_trainval2017.zip`。
 預設設定指向歷史輸出，會拒絕覆寫。重跑前複製兩份設定為 `.local.toml`，
 只調整下列路徑，保留研究參數；模型設定仍指向同目錄的 `training_models.toml`：
@@ -140,6 +223,10 @@ LR 診斷會凍結當前程式副本；原歷史診斷使用的 adapter 快照�
 - [第二輪同圖比較](../examples/training/recovery_comparison.csv)
 - [學習率對照](../examples/training/lr_diagnosis.json)
 - [歷史評估重算驗證](../examples/training/evaluation_verification.json)
+- [2026-11-09 擴大訓練結果](../examples/training/expanded_yolo26s_job_status.json)
+- [擴大訓練選模凍結紀錄](../examples/training/expanded_yolo26s_selection.json)
+- [擴大訓練完成核對紀錄](../examples/training/expanded_yolo26s_completion.json)
+- [擴大訓練啟動命令與環境](../examples/training/expanded_yolo26s_launch.json)
 
 `examples/training/` 另含三個 YOLO 的 epoch loss／development AP 與原生匯出驗證。
 完整 GT、權重、逐步日誌、預測與原始 provenance 保留於本機 `outputs/training/`，不納入 Git。

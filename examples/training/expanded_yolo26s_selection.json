@@ -1,0 +1,17 @@
+{
+  "automatic_production_model_replacement": false,
+  "baseline_development_mask_ap": 0.5838158830451957,
+  "best_checkpoint_sha256": "846098ade2ce75bf856027facc3ea882dfc13a3a6808e1c2cf07e630c1d1f95c",
+  "best_development_mask_ap": 0.5367784187953976,
+  "best_epoch": 1,
+  "config_sha256": "37ff6f79f8dacec4aae731a687bbdb81f5d4597df1d12793e230facff3cc95c6",
+  "created_at_utc": "2026-11-09T14:30:47.831732+00:00",
+  "frozen_data_manifest_sha256": "e9b46ec855db6e2cc4d6f6c753071ef65341e73f324159e20de0bd194f2bd5c2",
+  "holdout_subset_sha256": "1583f79d2d11b21fdb82fe09a3736b59cfb972a505c475003f125418a5f1c9bf",
+  "holdout_used_for_selection": false,
+  "model": "yolo26s_seg",
+  "original_checkpoint_sha256": "3da1d83e31caec96f9300eb4064f4f62882c133c7c264d63dfe61a7c197837a4",
+  "selected_candidate": "pretrained",
+  "status": "frozen_before_final_holdout_prediction",
+  "tie_rule": "retain pretrained on equality"
+}

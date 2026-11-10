@@ -1,0 +1,96 @@
+{
+  "automatic_production_model_replacement": false,
+  "child_pid": 3462,
+  "command": [
+    ".runtime/app/bin/python",
+    "outputs/training/yolo26s_expanded_20261109_v1/provenance/export_training_weights.py",
+    "--config",
+    "outputs/training/yolo26s_expanded_20261109_v1/training.toml",
+    "--model",
+    "yolo26s_seg"
+  ],
+  "completed_stages": [
+    "train",
+    "final_evaluation",
+    "native_export"
+  ],
+  "config_sha256": "37ff6f79f8dacec4aae731a687bbdb81f5d4597df1d12793e230facff3cc95c6",
+  "epochs": 3,
+  "expected_optimizer_steps": 11592,
+  "finished_at_utc": "2026-11-09T14:33:57.517502+00:00",
+  "interruption_policy": "retain all artifacts; no unverified automatic resume",
+  "latest_training_step": {
+    "epoch": 3,
+    "learning_rate": 1e-05,
+    "loss": 5.633776664733887,
+    "optimizer_step": 11592
+  },
+  "model": "yolo26s_seg",
+  "native_weights_sha256": "4f36d422b38de200e56459189af12b03ec505e143bcc296130fd7d0f05555485",
+  "pid": 17771,
+  "recipe": "original pretrained; SGD1e-5/batch2/640/freeze10/BN frozen/mps/FP32",
+  "result": {
+    "baseline_development_mask_ap": 0.5838158830451957,
+    "baseline_holdout_mask_ap": 0.5900766623220915,
+    "beats_pretrained_on_development": false,
+    "best_checkpoint_sha256": "846098ade2ce75bf856027facc3ea882dfc13a3a6808e1c2cf07e630c1d1f95c",
+    "best_development_mask_ap": 0.5367784187953976,
+    "best_epoch": 1,
+    "best_pt_policy": "Best trained epoch; pretrained baseline remains separately eligible.",
+    "change_vs_pretrained_ap_points": -4.332542733493005,
+    "changed_parameter_count": 343,
+    "device": "mps:0",
+    "epochs": [
+      {
+        "clipped_batch_fraction": 1.0,
+        "development_mask_ap": 0.5367784187953976,
+        "epoch": 1,
+        "mean_loss": 3.2812984427803547
+      },
+      {
+        "clipped_batch_fraction": 0.9994824016563147,
+        "development_mask_ap": 0.5354286121133757,
+        "epoch": 2,
+        "mean_loss": 3.271877461369487
+      },
+      {
+        "clipped_batch_fraction": 0.9979296066252588,
+        "development_mask_ap": 0.5356708771678539,
+        "epoch": 3,
+        "mean_loss": 3.342452465207557
+      }
+    ],
+    "evaluation_device": "cpu",
+    "final_holdout_mask_ap": {
+      "finetuned": 0.5467512349871615,
+      "pretrained": 0.5900766623220915
+    },
+    "finetuned_holdout_mask_ap": 0.5467512349871615,
+    "fresh_holdout_used_for_parameter_selection": false,
+    "holdout_used_for_parameter_selection": false,
+    "model": "yolo26s_seg",
+    "mps_operator_fallback_enabled": false,
+    "native_export_role": "fine-tuned candidate artifact, not automatic selection or deployment",
+    "optimizer_steps": 11592,
+    "original_module_sha256": "c909994d70589ddbb730767bd0e6cddb731e629615f96eb7faa224b08c599eb0",
+    "original_module_source": "src/animal_eye_metrology/research/training_recovery.py",
+    "precision": "float32",
+    "recommended_candidate_from_development": "pretrained",
+    "scope": "COCO train2017 project-held-out assessment; upstream pretraining overlap possible",
+    "selected_candidate_from_development": "pretrained",
+    "selection_frozen_sha256": "77f35798957f45b294016655487c5cd2a98c8a47bffd9afc2a14ab52c17fe23d",
+    "source_checkpoint_unchanged": true,
+    "status": "complete",
+    "training_wall_seconds_including_development": 7209.717306708999
+  },
+  "split_counts": {
+    "development": 950,
+    "final_holdout": 950,
+    "train": 7727
+  },
+  "stage": "native_export",
+  "stage_started_at_utc": "2026-11-09T14:33:47.492560+00:00",
+  "started_at_utc": "2026-11-09T12:00:44.837837+00:00",
+  "status": "complete",
+  "updated_at_utc": "2026-11-09T14:33:47.498303+00:00"
+}

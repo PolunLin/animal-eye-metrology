@@ -70,6 +70,39 @@
       "sha256": "bbcb6db47472672d53fb7bf2f456cb19d570d4edb2528de21dd012d0ac40dcd3",
       "source_sha256": "331edff03ed3cd33e8d7f659e0366672cd46c8624a92c7c057e9d12d781d8b4b",
       "transformation": "Project-root absolute paths normalized to relative paths; values unchanged."
+    },
+    {
+      "file": "expanded_yolo26s_job_status.json",
+      "source": "outputs/training/yolo26s_expanded_20261109_v1/job_status.json",
+      "sha256": "b2932b60f61b240001068cce957fd8d8e20c21af4156dbfa85d8aefd27041ad9",
+      "source_sha256": "af8a8a9231aac6ff92e39a13412914b141eef5ad403eca64609ed1cd0e9c6118",
+      "transformation": "Project-root absolute paths normalized to relative paths; values unchanged.",
+      "experiment_date": "2026-11-09"
+    },
+    {
+      "file": "expanded_yolo26s_selection.json",
+      "source": "outputs/training/yolo26s_expanded_20261109_v1/run/selection_frozen.json",
+      "sha256": "77f35798957f45b294016655487c5cd2a98c8a47bffd9afc2a14ab52c17fe23d",
+      "source_sha256": "77f35798957f45b294016655487c5cd2a98c8a47bffd9afc2a14ab52c17fe23d",
+      "transformation": "Exact byte copy.",
+      "experiment_date": "2026-11-09"
+    },
+    {
+      "file": "expanded_yolo26s_completion.json",
+      "source": "outputs/training/yolo26s_expanded_20261109_v1/completion_verification.json",
+      "sha256": "98fcc339df212c273ff425d8395b61516dfd38a96b61579a7c46058d1b8fec66",
+      "source_sha256": "98fcc339df212c273ff425d8395b61516dfd38a96b61579a7c46058d1b8fec66",
+      "transformation": "Exact byte copy.",
+      "experiment_date": "2026-11-09"
+    },
+    {
+      "file": "expanded_yolo26s_launch.json",
+      "source": "outputs/training/yolo26s_expanded_20261109_v1/launch.json",
+      "sha256": "15c0d56f60c1b314cca954962b71e67c3c55a069356db30795d83a44ee53aa21",
+      "source_sha256": "10383473cef96997ae97b8cc54413521f24b398dd727a2f4bfa5fb11fe8e1e3e",
+      "transformation": "Project-root absolute paths normalized to relative paths; values unchanged.",
+      "experiment_date": "2026-11-09"
     }
-  ]
+  ],
+  "updated_on": "2026-11-10"
 }
